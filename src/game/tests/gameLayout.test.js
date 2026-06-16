@@ -17,4 +17,13 @@ describe('calculateGameLayout', () => {
     expect(layout.board.cellSize).toBeGreaterThanOrEqual(width < 500 ? 56 : 70);
     expect(layout.tray.slotSize).toBeGreaterThanOrEqual(width < 500 ? 58 : 76);
   });
+
+  test('uses one visual die size for board, tray, and drag proxy', () => {
+    const layout = calculateGameLayout({ width: 393, height: 430, boardSize: 5, traySize: 3 });
+
+    expect(layout.board.dieSize).toBeGreaterThan(0);
+    expect(layout.tray.pieceSize).toBe(layout.board.dieSize);
+    expect(layout.drag.dieSize).toBe(layout.board.dieSize);
+    expect(layout.tray.slotSize).toBeGreaterThan(layout.board.dieSize);
+  });
 });

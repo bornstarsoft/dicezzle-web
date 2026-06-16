@@ -12,7 +12,7 @@ import { BoardView } from '../ui/BoardView.js';
 import { DiceView } from '../ui/DiceView.js';
 import { DiceStyle } from '../ui/DiceStyle.js';
 import { calculateGameLayout } from '../ui/GameLayout.js';
-import { getOrthogonalMergePath } from '../ui/MergePath.js';
+import { buildMergeGatherPlan } from '../ui/MergePath.js';
 import { ResultPanel } from '../ui/ResultPanel.js';
 import { ToastView } from '../ui/ToastView.js';
 import { TrayView } from '../ui/TrayView.js';
@@ -304,7 +304,7 @@ export class GameScene extends Phaser.Scene {
 
     this.clearMergeAnimationObjects();
     events.forEach((event, index) => {
-      const delay = index * 190;
+      const delay = index * 430;
       this.time.delayedCall(delay, () => {
         if (event.type === 'starClear') {
           this.playStarClearAnimation(event);
@@ -321,47 +321,106 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    const sourceCenters = (event.group ?? [])
-      .map((cell) => ({ cell, center: this.boardView.getCellCenter(cell.row, cell.col) }))
-      .filter((entry) => entry.center);
-    const dieSize = targetCenter.size * 0.9;
-    const targetPoint = {
-      row: event.target.row,
-      col: event.target.col,
-      x: targetCenter.x,
-      y: targetCenter.y
-    };
-
-    sourceCenters.forEach(({ cell, center }) => {
-      const path = getOrthogonalMergePath({
-        row: cell.row,
-        col: cell.col,
-        x: center.x,
-        y: center.y
-      }, targetPoint);
-      this.drawMergeTrail(path, event.value, targetCenter.size);
-      const overlay = DiceView.draw(this, center.x, center.y, dieSize, event.value, {
-        alpha: cell.row === event.target.row && cell.col === event.target.col ? 0.62 : 0.9,
-        depth: 70
-      });
-      this.mergeAnimationObjects.push(overlay);
-      this.animateAlongPath(overlay, path, targetCenter.size);
-    });
-
-    const popDelay = 260;
-    this.time.delayedCall(popDelay, () => {
-      this.playTargetPop(targetCenter, event.createdValue, event.createdValue === 'star');
+    const plan = this.buildGatherPlan(event, targetCenter);
+    this.playGatherPlan({
+      plan,
+      value: event.value,
+      dieSize: targetCenter.dieSize ?? targetCenter.size * 0.96,
+      cellSize: targetCenter.size,
+      onComplete: () => {
+        this.playTargetPop(targetCenter, event.createdValue, event.createdValue === 'star');
+      }
     });
   }
 
-  drawMergeTrail(path, value, cellSize) {
+  buildGatherPlan(event, targetCenter) {
+    const group = (event.group ?? [])
+      .map((cell) => {
+        const center = this.boardView.getCellCenter(cell.row, cell.col);
+        return center ? { row: cell.row, col: cell.col, x: center.x, y: center.y } : null;
+      })
+      .filter(Boolean);
+
+    return buildMergeGatherPlan({
+      group,
+      target: {
+        row: event.target.row,
+        col: event.target.col,
+        x: targetCenter.x,
+        y: targetCenter.y
+      },
+      blockedCells: this.getVisualBlockers(event)
+    });
+  }
+
+  getVisualBlockers(event) {
+    const mergeCells = new Set((event.group ?? []).map((cell) => `${cell.row},${cell.col}`));
+    const blockers = [];
+    for (let row = 0; row < this.board.size; row += 1) {
+      for (let col = 0; col < this.board.size; col += 1) {
+        if (this.board.getCell(row, col) && !mergeCells.has(`${row},${col}`)) {
+          blockers.push({ row, col });
+        }
+      }
+    }
+    return blockers;
+  }
+
+  playGatherPlan({ plan, value, dieSize, cellSize, onComplete }) {
+    if (!plan.steps.length) {
+      onComplete?.();
+      return;
+    }
+
+    const stepDelay = 118;
+    plan.steps.forEach((step, index) => {
+      this.time.delayedCall(index * stepDelay, () => {
+        const start = step.path[0];
+        const end = step.path[step.path.length - 1];
+        this.drawMergeTrail(step.path, value, cellSize, step.final ? 0.36 : 0.24);
+        const overlay = DiceView.draw(this, start.x, start.y, dieSize, value, {
+          alpha: 0.92,
+          depth: 72,
+          drag: true
+        });
+        this.mergeAnimationObjects.push(overlay);
+        this.animateAlongPath(overlay, step.path, cellSize, 1, {
+          finalScale: step.final ? 0.42 : 0.66,
+          onComplete: () => {
+            if (!step.final) {
+              this.playGatherPulse(end, value, cellSize);
+            }
+          }
+        });
+      });
+    });
+
+    this.time.delayedCall(plan.steps.length * stepDelay + 360, () => onComplete?.());
+  }
+
+  playGatherPulse(point, value, cellSize) {
+    const style = DiceStyle.forValue(value);
+    const pulse = this.add.circle(point.x, point.y, cellSize * 0.2, DiceStyle.hexToNumber(style.glow), 0.28).setDepth(71);
+    this.mergeAnimationObjects.push(pulse);
+    this.tweens.add({
+      targets: pulse,
+      scaleX: 1.9,
+      scaleY: 1.9,
+      alpha: 0,
+      duration: 160,
+      ease: 'Sine.easeOut',
+      onComplete: () => pulse.destroy()
+    });
+  }
+
+  drawMergeTrail(path, value, cellSize, alpha = 0.24) {
     if (path.length < 2) {
       return;
     }
 
     const style = DiceStyle.forValue(value);
     const trail = this.add.graphics().setDepth(69);
-    trail.lineStyle(Math.max(3, cellSize * 0.055), DiceStyle.hexToNumber(style.glow), 0.22);
+    trail.lineStyle(Math.max(4, cellSize * 0.06), DiceStyle.hexToNumber(style.glow), alpha);
     trail.beginPath();
     trail.moveTo(path[0].x, path[0].y);
     path.slice(1).forEach((point) => trail.lineTo(point.x, point.y));
@@ -370,22 +429,25 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({
       targets: trail,
       alpha: 0,
-      duration: 300,
+      duration: 340,
       ease: 'Sine.easeOut',
       onComplete: () => trail.destroy()
     });
   }
 
-  animateAlongPath(overlay, path, cellSize, segmentIndex = 1) {
+  animateAlongPath(overlay, path, cellSize, segmentIndex = 1, options = {}) {
     if (segmentIndex >= path.length) {
       this.tweens.add({
         targets: overlay,
-        scaleX: 0.38,
-        scaleY: 0.38,
+        scaleX: options.finalScale ?? 0.38,
+        scaleY: options.finalScale ?? 0.38,
         alpha: 0.06,
-        duration: 70,
+        duration: 58,
         ease: 'Cubic.easeIn',
-        onComplete: () => overlay.destroy()
+        onComplete: () => {
+          overlay.destroy();
+          options.onComplete?.();
+        }
       });
       return;
     }
@@ -395,11 +457,11 @@ export class GameScene extends Phaser.Scene {
       targets: overlay,
       x: point.x,
       y: point.y,
-      scaleX: segmentIndex === path.length - 1 ? 0.56 : 0.84,
-      scaleY: segmentIndex === path.length - 1 ? 0.56 : 0.84,
-      duration: Math.max(70, Math.min(105, cellSize * 1.35)),
+      scaleX: segmentIndex === path.length - 1 ? 0.62 : 0.9,
+      scaleY: segmentIndex === path.length - 1 ? 0.62 : 0.9,
+      duration: Math.max(86, Math.min(132, cellSize * 1.45)),
       ease: segmentIndex === path.length - 1 ? 'Cubic.easeIn' : 'Sine.easeInOut',
-      onComplete: () => this.animateAlongPath(overlay, path, cellSize, segmentIndex + 1)
+      onComplete: () => this.animateAlongPath(overlay, path, cellSize, segmentIndex + 1, options)
     });
   }
 
@@ -410,7 +472,7 @@ export class GameScene extends Phaser.Scene {
 
     const style = DiceStyle.forValue(value);
     const glow = this.add.circle(center.x, center.y, center.size * (isSpecial ? 0.66 : 0.52), DiceStyle.hexToNumber(style.glow), isSpecial ? 0.34 : 0.22).setDepth(68);
-    const die = DiceView.draw(this, center.x, center.y, center.size * 0.98, value, {
+    const die = DiceView.draw(this, center.x, center.y, center.dieSize ?? center.size * 0.96, value, {
       alpha: 0.98,
       depth: 72
     });
@@ -443,44 +505,26 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    (event.group ?? []).forEach((cell) => {
-      const center = this.boardView.getCellCenter(cell.row, cell.col);
-      if (!center) {
-        return;
+    const plan = this.buildGatherPlan(event, targetCenter);
+    this.playGatherPlan({
+      plan,
+      value: 'star',
+      dieSize: targetCenter.dieSize ?? targetCenter.size * 0.96,
+      cellSize: targetCenter.size,
+      onComplete: () => {
+        const burst = this.add.circle(targetCenter.x, targetCenter.y, targetCenter.size * 0.45, 0xf4bf45, 0.32).setDepth(69);
+        burst.setStrokeStyle(Math.max(3, targetCenter.size * 0.06), 0xd09416, 0.58);
+        this.mergeAnimationObjects.push(burst);
+        this.tweens.add({
+          targets: burst,
+          scaleX: 2.4,
+          scaleY: 2.4,
+          alpha: 0,
+          duration: 360,
+          ease: 'Sine.easeOut',
+          onComplete: () => burst.destroy()
+        });
       }
-      const path = getOrthogonalMergePath({
-        row: cell.row,
-        col: cell.col,
-        x: center.x,
-        y: center.y
-      }, {
-        row: event.target.row,
-        col: event.target.col,
-        x: targetCenter.x,
-        y: targetCenter.y
-      });
-      this.drawMergeTrail(path, 'star', targetCenter.size);
-      const overlay = DiceView.draw(this, center.x, center.y, center.size * 0.9, 'star', {
-        alpha: 0.88,
-        depth: 70
-      });
-      this.mergeAnimationObjects.push(overlay);
-      this.animateAlongPath(overlay, path, targetCenter.size);
-    });
-
-    this.time.delayedCall(260, () => {
-      const burst = this.add.circle(targetCenter.x, targetCenter.y, targetCenter.size * 0.45, 0xf4bf45, 0.32).setDepth(69);
-      burst.setStrokeStyle(Math.max(3, targetCenter.size * 0.06), 0xd09416, 0.58);
-      this.mergeAnimationObjects.push(burst);
-      this.tweens.add({
-        targets: burst,
-        scaleX: 2.4,
-        scaleY: 2.4,
-        alpha: 0,
-        duration: 360,
-        ease: 'Sine.easeOut',
-        onComplete: () => burst.destroy()
-      });
     });
   }
 
@@ -502,11 +546,9 @@ export class GameScene extends Phaser.Scene {
     this.cancelDrag({ render: false });
     const trayOrigin = this.trayView.getSlotCenter(slotIndex) ?? { x: pointer.x, y: pointer.y };
     const die = this.tray[slotIndex];
-    const boardCellSize = this.boardView.layout?.cellSize ?? 70;
-    const trayPieceSize = this.trayView.layout?.pieceSize ?? 70;
-    const ghostSize = Math.min(boardCellSize * 0.98, trayPieceSize * 1.18);
+    const ghostSize = this.gameLayout?.drag?.dieSize ?? this.boardView.layout?.dieSize ?? this.trayView.layout?.pieceSize ?? 70;
     const ghost = this.add.container(trayOrigin.x, trayOrigin.y).setDepth(80);
-    ghost.add(DiceView.draw(this, 0, 0, ghostSize, die.value, { alpha: 0.94 }));
+    ghost.add(DiceView.draw(this, 0, 0, ghostSize, die.value, { alpha: 0.96, drag: true }));
 
     this.selectedTrayIndex = slotIndex;
     this.dragState = {

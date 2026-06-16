@@ -27,6 +27,7 @@ export function calculateGameLayout({ width = 390, height = 430, boardSize = 5, 
   const cellGap = compactRound(clamp(rawBoardSize * 0.014, 4, compact ? 5.5 : 7));
   const cellSize = compactRound((rawBoardSize - cellGap * (boardSize - 1)) / boardSize);
   const renderedBoardSize = compactRound(cellSize * boardSize + cellGap * (boardSize - 1));
+  const dieSize = Math.floor(Math.min(cellSize * 0.99, traySlotSize * 0.92));
   const boardOriginX = compactRound((width - renderedBoardSize) / 2);
   const boardOriginY = topMargin;
   const trayTop = compactRound(boardOriginY + renderedBoardSize + trayGap);
@@ -52,6 +53,7 @@ export function calculateGameLayout({ width = 390, height = 430, boardSize = 5, 
       size: renderedBoardSize,
       boardSize: renderedBoardSize,
       cellSize,
+      dieSize,
       gap: cellGap,
       cells: boardSize,
       bottom: compactRound(boardOriginY + renderedBoardSize)
@@ -59,13 +61,16 @@ export function calculateGameLayout({ width = 390, height = 430, boardSize = 5, 
     tray: {
       slotCount: traySize,
       slotSize: traySlotSize,
-      pieceSize: Math.floor(traySlotSize * 0.82),
+      pieceSize: dieSize,
       gap: traySlotGap,
       top: trayTop,
       y: trayY,
       bottom: compactRound(trayTop + traySlotSize),
       totalWidth: trayTotalWidth,
       centers: trayCenters
+    },
+    drag: {
+      dieSize
     }
   };
 }
