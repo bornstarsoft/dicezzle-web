@@ -10,6 +10,7 @@ import { TrayGenerator } from '../core/TrayGenerator.js';
 import { TraySlots } from '../core/TraySlots.js';
 import { BoardView } from '../ui/BoardView.js';
 import { DiceView } from '../ui/DiceView.js';
+import { DiceStyle } from '../ui/DiceStyle.js';
 import { ResultPanel } from '../ui/ResultPanel.js';
 import { ToastView } from '../ui/ToastView.js';
 import { TrayView } from '../ui/TrayView.js';
@@ -54,6 +55,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   startGame() {
+    this.clearMergeAnimationObjects?.();
     this.board = new BoardModel(this.configData.boardSize ?? 5);
     this.trayGenerator = new TrayGenerator({
       seed: `classic-${Date.now()}`,
@@ -72,6 +74,7 @@ export class GameScene extends Phaser.Scene {
     this.selectedTrayIndex = 0;
     this.dragState = null;
     this.previewCell = null;
+    this.mergeAnimationObjects = [];
     this.isGameOver = false;
     this.tray = this.trayGenerator.nextTray({ turn: this.turn });
     this.resultPanel.hide();
@@ -189,6 +192,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.renderGame();
+    this.playMergeAnimations(mergeResult.events);
     return true;
   }
 
@@ -209,7 +213,7 @@ export class GameScene extends Phaser.Scene {
     } else if (lastEvent.type === 'starClear') {
       this.toast.show('Star clear!');
     } else {
-      this.toast.show(`${DiceModel.label(lastEvent.value)} merged`);
+      this.toast.show('Merge!');
     }
 
     result.events.forEach((event) => {
@@ -281,6 +285,149 @@ export class GameScene extends Phaser.Scene {
       onTrayTap: (index) => this.handleTrayTap(index),
       onTrayPointerDown: (index, pointer) => this.startDrag(index, pointer)
     });
+  }
+
+  playMergeAnimations(events) {
+    if (!events?.length || !this.boardView.layout) {
+      return;
+    }
+
+    this.clearMergeAnimationObjects();
+    events.forEach((event, index) => {
+      const delay = index * 190;
+      this.time.delayedCall(delay, () => {
+        if (event.type === 'starClear') {
+          this.playStarClearAnimation(event);
+        } else {
+          this.playMergeAnimation(event);
+        }
+      });
+    });
+  }
+
+  playMergeAnimation(event) {
+    const targetCenter = this.boardView.getCellCenter(event.target.row, event.target.col);
+    if (!targetCenter) {
+      return;
+    }
+
+    const sourceCenters = (event.group ?? [])
+      .map((cell) => ({ cell, center: this.boardView.getCellCenter(cell.row, cell.col) }))
+      .filter((entry) => entry.center);
+    const dieSize = targetCenter.size * 0.9;
+
+    sourceCenters.forEach(({ cell, center }) => {
+      const overlay = DiceView.draw(this, center.x, center.y, dieSize, event.value, {
+        alpha: cell.row === event.target.row && cell.col === event.target.col ? 0.62 : 0.9,
+        depth: 70
+      });
+      this.mergeAnimationObjects.push(overlay);
+      this.tweens.add({
+        targets: overlay,
+        x: targetCenter.x,
+        y: targetCenter.y,
+        scaleX: 0.42,
+        scaleY: 0.42,
+        alpha: 0.08,
+        duration: 150,
+        ease: 'Cubic.easeIn',
+        onComplete: () => overlay.destroy()
+      });
+    });
+
+    const popDelay = 150;
+    this.time.delayedCall(popDelay, () => {
+      this.playTargetPop(targetCenter, event.createdValue, event.createdValue === 'star');
+    });
+  }
+
+  playTargetPop(center, value, isSpecial = false) {
+    if (!center) {
+      return;
+    }
+
+    const style = DiceStyle.forValue(value);
+    const glow = this.add.circle(center.x, center.y, center.size * (isSpecial ? 0.66 : 0.52), DiceStyle.hexToNumber(style.glow), isSpecial ? 0.34 : 0.22).setDepth(68);
+    const die = DiceView.draw(this, center.x, center.y, center.size * 0.98, value, {
+      alpha: 0.98,
+      depth: 72
+    });
+    die.setScale(0.72);
+    this.mergeAnimationObjects.push(glow, die);
+
+    this.tweens.add({
+      targets: glow,
+      scaleX: isSpecial ? 1.5 : 1.25,
+      scaleY: isSpecial ? 1.5 : 1.25,
+      alpha: 0,
+      duration: isSpecial ? 320 : 220,
+      ease: 'Sine.easeOut',
+      onComplete: () => glow.destroy()
+    });
+    this.tweens.add({
+      targets: die,
+      scaleX: 1.12,
+      scaleY: 1.12,
+      duration: 105,
+      ease: 'Back.easeOut',
+      yoyo: true,
+      onComplete: () => die.destroy()
+    });
+  }
+
+  playStarClearAnimation(event) {
+    const targetCenter = this.boardView.getCellCenter(event.target.row, event.target.col);
+    if (!targetCenter) {
+      return;
+    }
+
+    (event.group ?? []).forEach((cell) => {
+      const center = this.boardView.getCellCenter(cell.row, cell.col);
+      if (!center) {
+        return;
+      }
+      const overlay = DiceView.draw(this, center.x, center.y, center.size * 0.9, 'star', {
+        alpha: 0.88,
+        depth: 70
+      });
+      this.mergeAnimationObjects.push(overlay);
+      this.tweens.add({
+        targets: overlay,
+        x: targetCenter.x,
+        y: targetCenter.y,
+        scaleX: 0.34,
+        scaleY: 0.34,
+        alpha: 0,
+        duration: 160,
+        ease: 'Cubic.easeIn',
+        onComplete: () => overlay.destroy()
+      });
+    });
+
+    this.time.delayedCall(150, () => {
+      const burst = this.add.circle(targetCenter.x, targetCenter.y, targetCenter.size * 0.45, 0xf4bf45, 0.32).setDepth(69);
+      burst.setStrokeStyle(Math.max(3, targetCenter.size * 0.06), 0xd09416, 0.58);
+      this.mergeAnimationObjects.push(burst);
+      this.tweens.add({
+        targets: burst,
+        scaleX: 2.4,
+        scaleY: 2.4,
+        alpha: 0,
+        duration: 360,
+        ease: 'Sine.easeOut',
+        onComplete: () => burst.destroy()
+      });
+    });
+  }
+
+  clearMergeAnimationObjects() {
+    this.mergeAnimationObjects?.forEach((object) => {
+      this.tweens.killTweensOf(object);
+      if (object && typeof object.destroy === 'function' && !object.destroyed) {
+        object.destroy();
+      }
+    });
+    this.mergeAnimationObjects = [];
   }
 
   startDrag(slotIndex, pointer) {
@@ -441,7 +588,15 @@ export class GameScene extends Phaser.Scene {
     setText('[data-score]', ScoreModel.formatScore(this.score));
     setText('[data-best-score]', ScoreModel.formatScore(Math.max(this.bestScore, this.score)));
     setText('[data-turns]', String(this.turn));
-    setText('[data-highest-die]', DiceModel.label(this.highestDie));
+    const highestElement = document.querySelector('[data-highest-die]');
+    if (highestElement) {
+      const style = DiceStyle.forValue(this.highestDie);
+      highestElement.textContent = DiceModel.label(this.highestDie);
+      highestElement.style.setProperty('--die-chip-fill', style.fill);
+      highestElement.style.setProperty('--die-chip-border', style.stroke);
+      highestElement.style.setProperty('--die-chip-ink', style.pip);
+      highestElement.classList.add('die-chip');
+    }
   }
 
   maxDie(left, right) {

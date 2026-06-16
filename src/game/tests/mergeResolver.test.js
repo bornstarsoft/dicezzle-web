@@ -20,6 +20,11 @@ describe('MergeResolver', () => {
     expect(board.getCell(2, 1)).toBeNull();
     expect(board.getCell(1, 2)).toBeNull();
     expect(result.events[0]).toMatchObject({ type: 'merge', value: 1, createdValue: 2, chain: 1 });
+    expect(result.events[0].group).toEqual([
+      { row: 1, col: 2 },
+      { row: 2, col: 1 },
+      { row: 2, col: 2 }
+    ]);
     expect(result.scoreDelta).toBe(30);
   });
 

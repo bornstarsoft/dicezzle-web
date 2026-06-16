@@ -76,4 +76,21 @@ export class BoardView {
 
     return { row, col };
   }
+
+  getCellCenter(row, col) {
+    if (!this.layout) {
+      return null;
+    }
+
+    const { originX, originY, cellSize, gap, size } = this.layout;
+    if (row < 0 || col < 0 || row >= size || col >= size) {
+      return null;
+    }
+
+    return {
+      x: originX + col * (cellSize + gap) + cellSize / 2,
+      y: originY + row * (cellSize + gap) + cellSize / 2,
+      size: cellSize
+    };
+  }
 }

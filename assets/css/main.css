@@ -92,26 +92,40 @@ a {
 }
 
 .hero--game-first {
-  grid-template-columns: minmax(260px, 0.72fr) minmax(360px, 760px);
-  align-items: start;
+  grid-template-columns: 1fr;
   min-height: auto;
-  padding-top: clamp(14px, 3vw, 34px);
+  gap: 16px;
+  padding-top: clamp(10px, 2vw, 24px);
 }
 
 .hero--game-first .hero__copy {
-  padding-top: clamp(8px, 4vw, 36px);
+  max-width: 720px;
+  margin: 0 auto;
+  padding-top: 0;
+  text-align: center;
 }
 
 .hero--game-first .hero__copy h1 {
-  font-size: clamp(2.8rem, 9vw, 5.6rem);
+  font-size: clamp(2.55rem, 9vw, 4.7rem);
 }
 
 .hero--game-first .hero__copy p {
+  margin-right: auto;
+  margin-left: auto;
   font-size: clamp(1rem, 2.4vw, 1.22rem);
+}
+
+.hero--game-first .eyebrow {
+  margin-bottom: 4px;
+}
+
+.hero--game-first .hero__actions {
+  display: none;
 }
 
 .hero__game .game-shell {
   width: 100%;
+  max-width: 760px;
   padding: 0;
 }
 
@@ -349,16 +363,12 @@ a {
   }
 
   .hero--game-first {
-    gap: 18px;
+    gap: 12px;
     padding-top: 12px;
   }
 
   .hero--game-first .hero__copy {
     padding-top: 0;
-  }
-
-  .hero--game-first .hero__actions {
-    display: none;
   }
 
   .related-games,

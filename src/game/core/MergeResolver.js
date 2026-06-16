@@ -43,6 +43,7 @@ export class MergeResolver {
         result.events.push({
           type: 'starClear',
           value,
+          group: group.map((cell) => ({ row: cell.row, col: cell.col })),
           groupSize: group.length,
           target,
           chain,
@@ -68,6 +69,7 @@ export class MergeResolver {
         type: 'merge',
         value,
         createdValue,
+        group: group.map((cell) => ({ row: cell.row, col: cell.col })),
         groupSize: group.length,
         target,
         chain,

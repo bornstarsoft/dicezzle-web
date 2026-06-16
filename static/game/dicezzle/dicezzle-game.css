@@ -22,7 +22,7 @@
 
 .game-hud {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
   gap: 8px;
 }
 
@@ -44,6 +44,19 @@
   display: block;
   margin-top: 2px;
   font-size: clamp(1rem, 4vw, 1.35rem);
+}
+
+.game-hud .die-chip {
+  display: inline-grid;
+  place-items: center;
+  min-width: 34px;
+  min-height: 34px;
+  border: 2px solid var(--die-chip-border, #cddbd3);
+  border-radius: 8px;
+  background: var(--die-chip-fill, #ffffff);
+  color: var(--die-chip-ink, #24312c);
+  line-height: 1;
+  padding: 2px 6px;
 }
 
 .dicezzle-game-canvas {
