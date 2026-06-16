@@ -1,0 +1,30 @@
+<section class="game-shell" aria-label="Dicezzle Classic game">
+  <div class="game-panel">
+    <div class="game-hud" aria-label="Game stats">
+      <div><span>Score</span><strong data-score>0</strong></div>
+      <div><span>Best</span><strong data-best-score>0</strong></div>
+      <div><span>Turn</span><strong data-turns>1</strong></div>
+      <div><span>Top</span><strong data-highest-die>⚀</strong></div>
+    </div>
+    <div id="dicezzle-game" class="dicezzle-game-canvas" role="application" aria-label="Dicezzle board and tray"></div>
+    <div class="game-actions" aria-label="Game controls">
+      <button type="button" data-game-restart>Restart</button>
+      <button type="button" data-game-sound aria-pressed="false">Sound off</button>
+    </div>
+    <p class="tutorial-hint" data-tutorial-hint>
+      Tap a die, then tap an empty cell. Match 3 connected dice to merge.
+      <button type="button" data-tutorial-dismiss>Got it</button>
+    </p>
+  </div>
+  <div class="game-toast" data-game-toast hidden></div>
+  <section class="result-panel" data-result-panel hidden aria-live="polite" aria-label="Game result">
+    <div class="result-panel__inner">
+      <div data-result-card></div>
+      <div class="result-panel__actions">
+        <button type="button" data-result-share>Share</button>
+        <button type="button" data-result-copy>Copy result</button>
+        <button type="button" data-result-restart>Play again</button>
+      </div>
+    </div>
+  </section>
+</section>

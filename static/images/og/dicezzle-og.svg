@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Dicezzle - Dice Merge Puzzle Online</title>
+  <desc id="desc">A calm dice merge puzzle board with dice and a star die.</desc>
+  <rect width="1200" height="630" fill="#f3f7f4"/>
+  <rect x="80" y="70" width="1040" height="490" rx="34" fill="#ffffff" stroke="#cddbd3" stroke-width="4"/>
+  <text x="130" y="180" fill="#24312c" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="86" font-weight="900">Dicezzle</text>
+  <text x="134" y="238" fill="#5f6d67" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="34" font-weight="700">Free dice merge puzzle online</text>
+  <g transform="translate(690 118)">
+    <rect width="330" height="330" rx="24" fill="#eef6f2" stroke="#cddbd3" stroke-width="4"/>
+    <g font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="54" font-weight="900" text-anchor="middle" dominant-baseline="middle">
+      <rect x="24" y="24" width="82" height="82" rx="16" fill="#ffffff" stroke="#cddbd3" stroke-width="3"/><text x="65" y="65" fill="#24312c">⚀</text>
+      <rect x="124" y="24" width="82" height="82" rx="16" fill="#ffffff" stroke="#cddbd3" stroke-width="3"/><text x="165" y="65" fill="#24312c">⚁</text>
+      <rect x="224" y="24" width="82" height="82" rx="16" fill="#ffffff" stroke="#cddbd3" stroke-width="3"/><text x="265" y="65" fill="#24312c">⚂</text>
+      <rect x="24" y="124" width="82" height="82" rx="16" fill="#ffffff" stroke="#cddbd3" stroke-width="3"/><text x="65" y="165" fill="#24312c">⚁</text>
+      <rect x="124" y="124" width="82" height="82" rx="16" fill="#fff2b8" stroke="#f4bf45" stroke-width="4"/><text x="165" y="165" fill="#7b5a09">⭐</text>
+      <rect x="224" y="124" width="82" height="82" rx="16" fill="#ffffff" stroke="#cddbd3" stroke-width="3"/><text x="265" y="165" fill="#24312c">⚃</text>
+      <rect x="24" y="224" width="82" height="82" rx="16" fill="#ffffff" stroke="#cddbd3" stroke-width="3"/><text x="65" y="265" fill="#24312c">⚄</text>
+      <rect x="124" y="224" width="82" height="82" rx="16" fill="#ffffff" stroke="#cddbd3" stroke-width="3"/><text x="165" y="265" fill="#24312c">⚅</text>
+      <rect x="224" y="224" width="82" height="82" rx="16" fill="#ffffff" stroke="#cddbd3" stroke-width="3"/><text x="265" y="265" fill="#24312c">⚄</text>
+    </g>
+  </g>
+  <text x="134" y="470" fill="#315f50" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="36" font-weight="900">Place -> Merge -> Chain -> Open Space</text>
+</svg>

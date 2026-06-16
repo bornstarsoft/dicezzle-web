@@ -1,0 +1,18 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ if .IsHome }}Dicezzle - Free Dice Merge Puzzle Online{{ else }}{{ .Title }}{{ end }}</title>
+<meta name="description" content="{{ .Description | default site.Params.description }}">
+<link rel="canonical" href="{{ .Permalink }}">
+{{ $style := resources.Get "css/main.css" | minify | fingerprint }}
+<link rel="stylesheet" href="{{ $style.RelPermalink }}">
+{{ if .Params.game }}
+  <link rel="stylesheet" href="/game/dicezzle/dicezzle-game.css">
+{{ end }}
+{{ partial "share-meta.html" . }}
+
+{{ $org := dict "@context" "https://schema.org" "@type" "Organization" "name" "Bornstar Soft" "url" "https://dicezzle.com/" }}
+{{ $site := dict "@context" "https://schema.org" "@type" "WebSite" "name" "Dicezzle" "url" "https://dicezzle.com/" "description" site.Params.description }}
+{{ $app := dict "@context" "https://schema.org" "@type" "VideoGame" "name" "Dicezzle" "url" "https://dicezzle.com/play/" "applicationCategory" "Game" "operatingSystem" "Any modern browser" "description" "Place dice, merge three matching dice, create star dice, and keep the board open." }}
+<script type="application/ld+json">{{ $org | jsonify | safeJS }}</script>
+<script type="application/ld+json">{{ $site | jsonify | safeJS }}</script>
+{{ if .Params.game }}<script type="application/ld+json">{{ $app | jsonify | safeJS }}</script>{{ end }}

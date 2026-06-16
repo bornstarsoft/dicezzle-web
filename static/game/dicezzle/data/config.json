@@ -1,0 +1,29 @@
+{
+  "boardSize": 5,
+  "scoring": {
+    "place": 1,
+    "merge": {
+      "1": 30,
+      "2": 60,
+      "3": 120,
+      "4": 240,
+      "5": 480,
+      "6": 960
+    },
+    "starClear": 2000,
+    "chainMultipliers": [1, 1.5, 2, 3]
+  },
+  "tray": {
+    "size": 3,
+    "earlyTurnCount": 8,
+    "earlyTurnMaxValue": 3,
+    "weights": [
+      { "value": 1, "weight": 42 },
+      { "value": 2, "weight": 34 },
+      { "value": 3, "weight": 20 },
+      { "value": 4, "weight": 9 },
+      { "value": 5, "weight": 4 },
+      { "value": 6, "weight": 1 }
+    ]
+  }
+}

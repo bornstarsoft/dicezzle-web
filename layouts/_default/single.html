@@ -1,0 +1,20 @@
+{{ define "main" }}
+  <article class="page {{ if .Params.game }}page--game{{ end }}">
+    <div class="page__header">
+      <p class="eyebrow">Dicezzle</p>
+      <h1>{{ .Params.h1 | default .Title }}</h1>
+      {{ with .Description }}<p class="lede">{{ . }}</p>{{ end }}
+    </div>
+
+    {{ if .Params.game }}
+      {{ partial "game-shell.html" . }}
+      <div class="content content--after-game">
+        {{ .Content }}
+      </div>
+    {{ else }}
+      <div class="content">
+        {{ .Content }}
+      </div>
+    {{ end }}
+  </article>
+{{ end }}

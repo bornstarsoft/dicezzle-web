@@ -1,0 +1,29 @@
+baseURL = 'https://dicezzle.com/'
+languageCode = 'en-us'
+title = 'Dicezzle - Dice Merge Puzzle Online'
+
+[params]
+  siteName = 'Dicezzle'
+  description = 'Play Dicezzle, a free dice merge puzzle game online. Place dice, merge matching numbers, create star dice, and keep the board open.'
+  ogImage = '/images/og/dicezzle-og.svg'
+
+[menu]
+  [[menu.main]]
+    name = 'Play'
+    url = '/play/'
+    weight = 10
+  [[menu.main]]
+    name = 'Guide'
+    url = '/guide/'
+    weight = 20
+  [[menu.main]]
+    name = 'Daily'
+    url = '/daily/'
+    weight = 30
+  [[menu.main]]
+    name = 'About'
+    url = '/about/'
+    weight = 40
+
+[markup.goldmark.renderer]
+  unsafe = true
