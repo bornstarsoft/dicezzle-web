@@ -6,6 +6,6 @@ description: "Contact Bornstar Soft about Dicezzle."
 
 For Dicezzle feedback, bug reports, or business contact, please use the official Bornstar Soft contact channel when available.
 
-Email placeholder: `hello@example.com`
+Email placeholder: `contact@dicezzle.com`
 
-This placeholder is kept easy to update before launch.
+For support, feedback, bug reports, or privacy questions, please contact us by email.
