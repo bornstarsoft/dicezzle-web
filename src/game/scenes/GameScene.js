@@ -11,6 +11,8 @@ import { TraySlots } from '../core/TraySlots.js';
 import { BoardView } from '../ui/BoardView.js';
 import { DiceView } from '../ui/DiceView.js';
 import { DiceStyle } from '../ui/DiceStyle.js';
+import { calculateGameLayout } from '../ui/GameLayout.js';
+import { getOrthogonalMergePath } from '../ui/MergePath.js';
 import { ResultPanel } from '../ui/ResultPanel.js';
 import { ToastView } from '../ui/ToastView.js';
 import { TrayView } from '../ui/TrayView.js';
@@ -274,12 +276,20 @@ export class GameScene extends Phaser.Scene {
 
   renderGame() {
     this.updateStats();
+    this.gameLayout = calculateGameLayout({
+      width: this.scale.width,
+      height: this.scale.height,
+      boardSize: this.board.size,
+      traySize: Math.max(3, this.tray.length)
+    });
     this.boardView.draw(this.board, {
+      layout: this.gameLayout,
       selectedDie: this.selectedTrayIndex === null ? null : this.tray[this.selectedTrayIndex],
       previewCell: this.previewCell,
       onCellTap: (row, col) => this.handleCellTap(row, col)
     });
     this.trayView.draw(this.tray, {
+      layout: this.gameLayout,
       selectedIndex: this.selectedTrayIndex,
       dragSlotIndex: this.dragState?.slotIndex,
       onTrayTap: (index) => this.handleTrayTap(index),
@@ -315,29 +325,81 @@ export class GameScene extends Phaser.Scene {
       .map((cell) => ({ cell, center: this.boardView.getCellCenter(cell.row, cell.col) }))
       .filter((entry) => entry.center);
     const dieSize = targetCenter.size * 0.9;
+    const targetPoint = {
+      row: event.target.row,
+      col: event.target.col,
+      x: targetCenter.x,
+      y: targetCenter.y
+    };
 
     sourceCenters.forEach(({ cell, center }) => {
+      const path = getOrthogonalMergePath({
+        row: cell.row,
+        col: cell.col,
+        x: center.x,
+        y: center.y
+      }, targetPoint);
+      this.drawMergeTrail(path, event.value, targetCenter.size);
       const overlay = DiceView.draw(this, center.x, center.y, dieSize, event.value, {
         alpha: cell.row === event.target.row && cell.col === event.target.col ? 0.62 : 0.9,
         depth: 70
       });
       this.mergeAnimationObjects.push(overlay);
+      this.animateAlongPath(overlay, path, targetCenter.size);
+    });
+
+    const popDelay = 260;
+    this.time.delayedCall(popDelay, () => {
+      this.playTargetPop(targetCenter, event.createdValue, event.createdValue === 'star');
+    });
+  }
+
+  drawMergeTrail(path, value, cellSize) {
+    if (path.length < 2) {
+      return;
+    }
+
+    const style = DiceStyle.forValue(value);
+    const trail = this.add.graphics().setDepth(69);
+    trail.lineStyle(Math.max(3, cellSize * 0.055), DiceStyle.hexToNumber(style.glow), 0.22);
+    trail.beginPath();
+    trail.moveTo(path[0].x, path[0].y);
+    path.slice(1).forEach((point) => trail.lineTo(point.x, point.y));
+    trail.strokePath();
+    this.mergeAnimationObjects.push(trail);
+    this.tweens.add({
+      targets: trail,
+      alpha: 0,
+      duration: 300,
+      ease: 'Sine.easeOut',
+      onComplete: () => trail.destroy()
+    });
+  }
+
+  animateAlongPath(overlay, path, cellSize, segmentIndex = 1) {
+    if (segmentIndex >= path.length) {
       this.tweens.add({
         targets: overlay,
-        x: targetCenter.x,
-        y: targetCenter.y,
-        scaleX: 0.42,
-        scaleY: 0.42,
-        alpha: 0.08,
-        duration: 150,
+        scaleX: 0.38,
+        scaleY: 0.38,
+        alpha: 0.06,
+        duration: 70,
         ease: 'Cubic.easeIn',
         onComplete: () => overlay.destroy()
       });
-    });
+      return;
+    }
 
-    const popDelay = 150;
-    this.time.delayedCall(popDelay, () => {
-      this.playTargetPop(targetCenter, event.createdValue, event.createdValue === 'star');
+    const point = path[segmentIndex];
+    this.tweens.add({
+      targets: overlay,
+      x: point.x,
+      y: point.y,
+      scaleX: segmentIndex === path.length - 1 ? 0.56 : 0.84,
+      scaleY: segmentIndex === path.length - 1 ? 0.56 : 0.84,
+      duration: Math.max(70, Math.min(105, cellSize * 1.35)),
+      ease: segmentIndex === path.length - 1 ? 'Cubic.easeIn' : 'Sine.easeInOut',
+      onComplete: () => this.animateAlongPath(overlay, path, cellSize, segmentIndex + 1)
     });
   }
 
@@ -386,25 +448,27 @@ export class GameScene extends Phaser.Scene {
       if (!center) {
         return;
       }
+      const path = getOrthogonalMergePath({
+        row: cell.row,
+        col: cell.col,
+        x: center.x,
+        y: center.y
+      }, {
+        row: event.target.row,
+        col: event.target.col,
+        x: targetCenter.x,
+        y: targetCenter.y
+      });
+      this.drawMergeTrail(path, 'star', targetCenter.size);
       const overlay = DiceView.draw(this, center.x, center.y, center.size * 0.9, 'star', {
         alpha: 0.88,
         depth: 70
       });
       this.mergeAnimationObjects.push(overlay);
-      this.tweens.add({
-        targets: overlay,
-        x: targetCenter.x,
-        y: targetCenter.y,
-        scaleX: 0.34,
-        scaleY: 0.34,
-        alpha: 0,
-        duration: 160,
-        ease: 'Cubic.easeIn',
-        onComplete: () => overlay.destroy()
-      });
+      this.animateAlongPath(overlay, path, targetCenter.size);
     });
 
-    this.time.delayedCall(150, () => {
+    this.time.delayedCall(260, () => {
       const burst = this.add.circle(targetCenter.x, targetCenter.y, targetCenter.size * 0.45, 0xf4bf45, 0.32).setDepth(69);
       burst.setStrokeStyle(Math.max(3, targetCenter.size * 0.06), 0xd09416, 0.58);
       this.mergeAnimationObjects.push(burst);

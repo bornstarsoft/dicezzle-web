@@ -1,5 +1,6 @@
-import Phaser from 'phaser';
 import { DiceView } from './DiceView.js';
+import { DiceStyle } from './DiceStyle.js';
+import { calculateGameLayout } from './GameLayout.js';
 
 export class TrayView {
   constructor(scene) {
@@ -17,38 +18,26 @@ export class TrayView {
     const width = this.scene.scale.width;
     const height = this.scene.scale.height;
     const slotCount = options.slotCount ?? Math.max(3, tray.length);
-    const slotSize = Math.min(88, Math.max(66, (width - 76) / slotCount));
-    const gap = Math.max(10, Math.min(18, width * 0.038));
-    const totalWidth = slotCount * slotSize + Math.max(0, slotCount - 1) * gap;
-    const startX = (width - totalWidth) / 2 + slotSize / 2;
-    const y = Math.min(height - slotSize / 2 - 18, height * 0.82);
-    const pieceSize = slotSize * 0.86;
-    const centers = [];
+    const gameLayout = options.layout ?? calculateGameLayout({ width, height, traySize: slotCount });
+    const { slotSize, gap, y, centers, totalWidth, top } = gameLayout.tray;
+    const pieceSize = gameLayout.tray.pieceSize;
     this.layout = { slotCount, slotSize, pieceSize, gap, y, centers };
 
-    const label = this.scene.add.text(width / 2, y - slotSize / 2 - 20, 'Tray', {
-      color: '#5f675f',
-      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-      fontSize: '16px',
-      fontStyle: '700'
-    }).setOrigin(0.5);
-    this.objects.push(label);
+    this.drawRack(totalWidth, slotSize, top, gap);
 
     for (let index = 0; index < slotCount; index += 1) {
       const die = tray[index];
-      const x = startX + index * (slotSize + gap);
-      centers[index] = { x, y };
-
-      const slot = this.scene.add.graphics();
-      slot.fillStyle(die ? 0xffffff : 0xe8f0eb, die ? 1 : 0.78);
-      slot.lineStyle(index === options.selectedIndex ? 4 : 2, index === options.selectedIndex ? 0x315f50 : 0xcddbd3, die ? 1 : 0.76);
-      slot.fillRoundedRect(x - slotSize / 2, y - slotSize / 2, slotSize, slotSize, Math.max(8, slotSize * 0.16));
-      slot.strokeRoundedRect(x - slotSize / 2, y - slotSize / 2, slotSize, slotSize, Math.max(8, slotSize * 0.16));
-      this.objects.push(slot);
+      const { x } = centers[index];
+      const isSelected = index === options.selectedIndex;
+      this.objects.push(this.drawSlotHolder(x, y, slotSize, {
+        die,
+        selected: isSelected,
+        empty: !die
+      }));
 
       if (die && options.dragSlotIndex !== index) {
         this.objects.push(DiceView.draw(this.scene, x, y, pieceSize, die.value, {
-          selected: index === options.selectedIndex
+          selected: isSelected
         }));
       }
 
@@ -66,5 +55,64 @@ export class TrayView {
 
   getSlotCenter(index) {
     return this.layout?.centers?.[index] ?? null;
+  }
+
+  drawRack(totalWidth, slotSize, top, gap) {
+    const padX = Math.max(8, slotSize * 0.12);
+    const padY = Math.max(6, slotSize * 0.09);
+    const rackX = (this.scene.scale.width - totalWidth) / 2 - padX;
+    const rackY = top - padY;
+    const rackWidth = totalWidth + padX * 2;
+    const rackHeight = slotSize + padY * 2;
+    const radius = Math.max(14, slotSize * 0.2);
+    const rack = this.scene.add.graphics();
+
+    rack.fillStyle(0x5d4a33, 0.16);
+    rack.fillRoundedRect(rackX + 1, rackY + 5, rackWidth, rackHeight, radius);
+    rack.fillStyle(0xd4bea0, 1);
+    rack.fillRoundedRect(rackX, rackY, rackWidth, rackHeight, radius);
+    rack.lineStyle(2, 0xffefd1, 0.78);
+    rack.strokeRoundedRect(rackX + 2, rackY + 2, rackWidth - 4, rackHeight - 4, radius - 2);
+    rack.lineStyle(1, 0xa7875e, 0.72);
+    rack.strokeRoundedRect(rackX, rackY, rackWidth, rackHeight, radius);
+
+    this.objects.push(rack);
+  }
+
+  drawSlotHolder(x, y, size, { die, selected, empty }) {
+    const holder = this.scene.add.graphics();
+    const radius = Math.max(11, size * 0.18);
+    const left = x - size / 2;
+    const top = y - size / 2;
+    const style = die ? DiceStyle.forValue(die.value) : null;
+    const accent = selected ? 0xffd967 : style ? DiceStyle.hexToNumber(style.glow) : 0xa7875e;
+    const accentAlpha = selected ? 0.95 : die ? 0.36 : 0.16;
+
+    if (selected) {
+      holder.fillStyle(0xffd967, 0.2);
+      holder.fillRoundedRect(left - 5, top - 5, size + 10, size + 10, radius + 5);
+    }
+
+    holder.fillStyle(0x6c5134, 0.18);
+    holder.fillRoundedRect(left + 2, top + 4, size, size, radius);
+    holder.fillStyle(0xcdb38f, 1);
+    holder.fillRoundedRect(left, top, size, size, radius);
+    holder.fillStyle(empty ? 0xd9c8ad : 0xe7d8c1, 1);
+    holder.fillRoundedRect(left + size * 0.11, top + size * 0.1, size * 0.78, size * 0.76, radius * 0.62);
+    holder.lineStyle(selected ? 4 : 2, accent, accentAlpha);
+    holder.strokeRoundedRect(left + 1, top + 1, size - 2, size - 2, radius);
+    holder.lineStyle(1, 0xfff4df, 0.5);
+    holder.strokeRoundedRect(left + size * 0.14, top + size * 0.13, size * 0.72, size * 0.66, radius * 0.48);
+
+    const tabWidth = Math.max(4, size * 0.075);
+    const tabHeight = Math.max(18, size * 0.32);
+    holder.fillStyle(0xf2c261, selected ? 1 : 0.74);
+    holder.fillRoundedRect(left - tabWidth * 0.45, y - tabHeight / 2, tabWidth, tabHeight, tabWidth);
+    holder.fillRoundedRect(left + size - tabWidth * 0.55, y - tabHeight / 2, tabWidth, tabHeight, tabWidth);
+    holder.lineStyle(1, 0x9f6b1e, 0.5);
+    holder.strokeRoundedRect(left - tabWidth * 0.45, y - tabHeight / 2, tabWidth, tabHeight, tabWidth);
+    holder.strokeRoundedRect(left + size - tabWidth * 0.55, y - tabHeight / 2, tabWidth, tabHeight, tabWidth);
+
+    return holder;
   }
 }

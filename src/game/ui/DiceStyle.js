@@ -1,52 +1,87 @@
 const VALUE_STYLES = {
   1: {
     name: 'soft blue',
-    fill: '#dcecff',
-    stroke: '#6f9fbd',
-    pip: '#173958',
-    glow: '#9fc5eb'
+    fill: '#4f9de8',
+    highlight: '#9fd4ff',
+    side: '#2f6fbd',
+    stroke: '#235a9c',
+    rim: '#bee3ff',
+    pip: '#fff8ec',
+    pipShadow: '#244b76',
+    shadow: '#17385f',
+    glow: '#8fc8ff'
   },
   2: {
     name: 'teal green',
-    fill: '#dff4e9',
-    stroke: '#55a982',
-    pip: '#163f32',
-    glow: '#8bd0b0'
+    fill: '#25b9b0',
+    highlight: '#8cf1e9',
+    side: '#16847e',
+    stroke: '#116d68',
+    rim: '#b7fff8',
+    pip: '#fff8ec',
+    pipShadow: '#10534f',
+    shadow: '#0e4644',
+    glow: '#7ee7de'
   },
   3: {
     name: 'warm gold',
-    fill: '#fff3bf',
-    stroke: '#d7a62f',
-    pip: '#4e3908',
-    glow: '#f2cf65'
+    fill: '#ffc32e',
+    highlight: '#ffe68a',
+    side: '#c78409',
+    stroke: '#a76e06',
+    rim: '#fff0a8',
+    pip: '#fff9ee',
+    pipShadow: '#79500a',
+    shadow: '#87570a',
+    glow: '#ffd85c'
   },
   4: {
     name: 'soft orange',
-    fill: '#ffe4cb',
-    stroke: '#df8a45',
-    pip: '#5a2d0d',
-    glow: '#efb074'
+    fill: '#ff8a23',
+    highlight: '#ffc176',
+    side: '#c9500d',
+    stroke: '#a8410a',
+    rim: '#ffd4a2',
+    pip: '#fff8ec',
+    pipShadow: '#843009',
+    shadow: '#80340b',
+    glow: '#ffb15f'
   },
   5: {
     name: 'coral red',
-    fill: '#ffe0dc',
-    stroke: '#df6758',
-    pip: '#5e2019',
-    glow: '#ec9a8f'
+    fill: '#f05b55',
+    highlight: '#ffaaa2',
+    side: '#b93037',
+    stroke: '#9b2730',
+    rim: '#ffd0ca',
+    pip: '#fff8ec',
+    pipShadow: '#84262c',
+    shadow: '#722229',
+    glow: '#ff948b'
   },
   6: {
     name: 'calm purple',
-    fill: '#eadfff',
-    stroke: '#8f76c8',
-    pip: '#35235f',
-    glow: '#b8a5e6'
+    fill: '#7b4cc1',
+    highlight: '#b79ae9',
+    side: '#57328f',
+    stroke: '#462574',
+    rim: '#ddccff',
+    pip: '#fff8ec',
+    pipShadow: '#392164',
+    shadow: '#2c1a50',
+    glow: '#b596ef'
   },
   star: {
     name: 'star gold',
-    fill: '#fff2ad',
-    stroke: '#d09416',
-    pip: '#725207',
-    glow: '#f4bf45'
+    fill: '#ffd15b',
+    highlight: '#fff0a8',
+    side: '#c8860b',
+    stroke: '#a86b08',
+    rim: '#fff5bc',
+    pip: '#fff8d8',
+    pipShadow: '#8b5d08',
+    shadow: '#855507',
+    glow: '#ffd967'
   }
 };
 

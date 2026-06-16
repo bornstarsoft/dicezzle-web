@@ -11,6 +11,11 @@ describe('DiceStyle', () => {
       expect(style.fill).toMatch(/^#[0-9a-f]{6}$/i);
       expect(style.stroke).toMatch(/^#[0-9a-f]{6}$/i);
       expect(style.pip).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(style.highlight).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(style.side).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(style.shadow).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(style.rim).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(style.pipShadow).toMatch(/^#[0-9a-f]{6}$/i);
       expect(typeof style.name).toBe('string');
     });
   });
