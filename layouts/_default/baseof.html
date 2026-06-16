@@ -11,7 +11,7 @@
     {{ partial "footer.html" . }}
     {{ $siteJS := resources.Get "js/site.js" | minify | fingerprint }}
     <script src="{{ $siteJS.RelPermalink }}" defer></script>
-    {{ if .Params.game }}
+    {{ if or .IsHome .Params.game }}
       <script type="module" src="/game/dicezzle/dicezzle-game.js"></script>
     {{ end }}
   </body>

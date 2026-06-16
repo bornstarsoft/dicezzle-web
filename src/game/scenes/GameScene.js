@@ -7,7 +7,9 @@ import { ScoreModel, defaultScoringConfig } from '../core/ScoreModel.js';
 import { ShareService } from '../core/ShareService.js';
 import { StorageService } from '../core/StorageService.js';
 import { TrayGenerator } from '../core/TrayGenerator.js';
+import { TraySlots } from '../core/TraySlots.js';
 import { BoardView } from '../ui/BoardView.js';
+import { DiceView } from '../ui/DiceView.js';
 import { ResultPanel } from '../ui/ResultPanel.js';
 import { ToastView } from '../ui/ToastView.js';
 import { TrayView } from '../ui/TrayView.js';
@@ -43,8 +45,12 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.bindControls();
+    this.bindPointerControls();
     this.startGame();
-    this.scale.on('resize', () => this.renderGame());
+    this.scale.on('resize', () => {
+      this.cancelDrag();
+      this.renderGame();
+    });
   }
 
   startGame() {
@@ -64,6 +70,8 @@ export class GameScene extends Phaser.Scene {
     this.starClears = 0;
     this.bestChain = 1;
     this.selectedTrayIndex = 0;
+    this.dragState = null;
+    this.previewCell = null;
     this.isGameOver = false;
     this.tray = this.trayGenerator.nextTray({ turn: this.turn });
     this.resultPanel.hide();
@@ -93,6 +101,12 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  bindPointerControls() {
+    this.input.on('pointermove', (pointer) => this.handlePointerMove(pointer));
+    this.input.on('pointerup', (pointer) => this.handlePointerUp(pointer));
+    this.input.on('gameout', () => this.handlePointerCancel());
+  }
+
   showTutorialIfNeeded() {
     const hint = document.querySelector('[data-tutorial-hint]');
     if (!hint) {
@@ -120,7 +134,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   handleTrayTap(index) {
-    if (this.isGameOver) {
+    if (this.isGameOver || !this.tray[index]) {
       return;
     }
     this.selectedTrayIndex = index;
@@ -137,12 +151,23 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    const die = this.tray[this.selectedTrayIndex];
+    this.placeTrayDie(this.selectedTrayIndex, row, col);
+  }
+
+  placeTrayDie(slotIndex, row, col) {
+    if (this.isGameOver || !this.tray[slotIndex]) {
+      return false;
+    }
+    if (!this.board.isEmpty(row, col)) {
+      return false;
+    }
+
+    const die = this.tray[slotIndex];
     this.board.placeDie(row, col, die.value);
     this.score += this.scoreModel.placeScore();
     this.highestDie = this.maxDie(this.highestDie, die.value);
-    this.tray.splice(this.selectedTrayIndex, 1);
-    this.selectedTrayIndex = this.tray.length > 0 ? Math.min(this.selectedTrayIndex, this.tray.length - 1) : null;
+    this.tray = TraySlots.consume(this.tray, slotIndex);
+    this.selectedTrayIndex = TraySlots.nextActiveIndex(this.tray, slotIndex);
     this.track('dice_place', { value: die.value });
 
     const mergeResult = this.resolver.resolveAll(this.board, { row, col });
@@ -150,20 +175,21 @@ export class GameScene extends Phaser.Scene {
 
     if (this.shouldGameEnd()) {
       this.endGame();
-      return;
+      return true;
     }
 
-    if (this.tray.length === 0) {
+    if (TraySlots.shouldRefill(this.tray)) {
       this.turn += 1;
       this.tray = this.trayGenerator.nextTray({ turn: this.turn });
-      this.selectedTrayIndex = 0;
+      this.selectedTrayIndex = TraySlots.nextActiveIndex(this.tray, 0);
       if (this.shouldGameEnd()) {
         this.endGame();
-        return;
+        return true;
       }
     }
 
     this.renderGame();
+    return true;
   }
 
   applyMergeResult(result) {
@@ -199,7 +225,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   shouldGameEnd() {
-    return this.board.getEmptyCells().length === 0 && this.tray.length > 0;
+    return this.board.getEmptyCells().length === 0 && this.tray.some(Boolean);
   }
 
   endGame() {
@@ -246,12 +272,163 @@ export class GameScene extends Phaser.Scene {
     this.updateStats();
     this.boardView.draw(this.board, {
       selectedDie: this.selectedTrayIndex === null ? null : this.tray[this.selectedTrayIndex],
+      previewCell: this.previewCell,
       onCellTap: (row, col) => this.handleCellTap(row, col)
     });
     this.trayView.draw(this.tray, {
       selectedIndex: this.selectedTrayIndex,
-      onTrayTap: (index) => this.handleTrayTap(index)
+      dragSlotIndex: this.dragState?.slotIndex,
+      onTrayTap: (index) => this.handleTrayTap(index),
+      onTrayPointerDown: (index, pointer) => this.startDrag(index, pointer)
     });
+  }
+
+  startDrag(slotIndex, pointer) {
+    if (this.isGameOver || !this.tray[slotIndex]) {
+      return;
+    }
+
+    this.cancelDrag({ render: false });
+    const trayOrigin = this.trayView.getSlotCenter(slotIndex) ?? { x: pointer.x, y: pointer.y };
+    const die = this.tray[slotIndex];
+    const boardCellSize = this.boardView.layout?.cellSize ?? 70;
+    const trayPieceSize = this.trayView.layout?.pieceSize ?? 70;
+    const ghostSize = Math.min(boardCellSize * 0.98, trayPieceSize * 1.18);
+    const ghost = this.add.container(trayOrigin.x, trayOrigin.y).setDepth(80);
+    ghost.add(DiceView.draw(this, 0, 0, ghostSize, die.value, { alpha: 0.94 }));
+
+    this.selectedTrayIndex = slotIndex;
+    this.dragState = {
+      slotIndex,
+      die,
+      trayOrigin,
+      ghost,
+      ghostSize,
+      returning: false,
+      valid: false,
+      boardCell: null
+    };
+    this.renderGame();
+    this.handlePointerMove(pointer);
+  }
+
+  handlePointerMove(pointer) {
+    if (!this.dragState || this.dragState.returning) {
+      return;
+    }
+
+    const lifted = this.getLiftedPointer(pointer);
+    const boardCell = this.boardView.getCellAtPoint(lifted.x, lifted.y);
+    const valid = Boolean(boardCell && this.board.isEmpty(boardCell.row, boardCell.col));
+    this.dragState.valid = valid;
+    this.dragState.boardCell = boardCell;
+    this.previewCell = boardCell ? { ...boardCell, valid } : null;
+    this.moveDragGhost(pointer, true);
+    this.boardView.draw(this.board, {
+      selectedDie: this.dragState.die,
+      previewCell: this.previewCell,
+      onCellTap: (row, col) => this.handleCellTap(row, col)
+    });
+  }
+
+  handlePointerUp(pointer) {
+    if (!this.dragState || this.dragState.returning) {
+      return;
+    }
+
+    const state = this.dragState;
+    const lifted = this.getLiftedPointer(pointer);
+    const boardCell = this.boardView.getCellAtPoint(lifted.x, lifted.y);
+    this.previewCell = null;
+
+    if (!boardCell || !this.board.isEmpty(boardCell.row, boardCell.col)) {
+      this.toast.show(boardCell ? 'Choose an empty cell.' : 'Drop onto the board.');
+      this.previewCell = boardCell ? { ...boardCell, valid: false } : null;
+      this.boardView.draw(this.board, {
+        selectedDie: state.die,
+        previewCell: this.previewCell,
+        onCellTap: (row, col) => this.handleCellTap(row, col)
+      });
+      this.animateGhostBackToTray(state);
+      return;
+    }
+
+    state.ghost.destroy();
+    this.dragState = null;
+    this.placeTrayDie(state.slotIndex, boardCell.row, boardCell.col);
+  }
+
+  handlePointerCancel() {
+    if (this.dragState && !this.dragState.returning) {
+      this.animateGhostBackToTray(this.dragState);
+    }
+  }
+
+  getLiftedPointer(pointer) {
+    const lift = Math.min(46, Math.max(24, (this.dragState?.ghostSize ?? 64) * 0.42));
+    return { x: pointer.x, y: pointer.y - lift };
+  }
+
+  moveDragGhost(pointer, immediate = false) {
+    if (!this.dragState?.ghost) {
+      return;
+    }
+
+    const lifted = this.getLiftedPointer(pointer);
+    this.tweens.killTweensOf(this.dragState.ghost);
+    if (immediate) {
+      this.dragState.ghost.setPosition(lifted.x, lifted.y);
+      return;
+    }
+    this.tweens.add({
+      targets: this.dragState.ghost,
+      x: lifted.x,
+      y: lifted.y,
+      duration: 55,
+      ease: 'Sine.easeOut'
+    });
+  }
+
+  animateGhostBackToTray(state) {
+    if (!state?.ghost || state.returning) {
+      return;
+    }
+
+    state.returning = true;
+    this.tweens.killTweensOf(state.ghost);
+    const trayPieceSize = this.trayView.layout?.pieceSize ?? state.ghostSize;
+    const returnScale = Math.max(0.62, Math.min(1, trayPieceSize / state.ghostSize));
+    this.tweens.add({
+      targets: state.ghost,
+      x: state.trayOrigin.x,
+      y: state.trayOrigin.y,
+      scaleX: returnScale,
+      scaleY: returnScale,
+      alpha: 0.52,
+      duration: 210,
+      ease: 'Cubic.easeOut',
+      onComplete: () => {
+        state.ghost.destroy();
+        if (this.dragState === state) {
+          this.dragState = null;
+        }
+        this.previewCell = null;
+        this.renderGame();
+      }
+    });
+  }
+
+  cancelDrag(options = {}) {
+    if (!this.dragState) {
+      return;
+    }
+    this.tweens.killTweensOf(this.dragState.ghost);
+    this.dragState.ghost.destroy();
+    this.dragState = null;
+    this.previewCell = null;
+    if (options.render !== false) {
+      this.renderGame();
+    }
   }
 
   updateStats() {

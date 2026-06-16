@@ -5,7 +5,7 @@
 <link rel="canonical" href="{{ .Permalink }}">
 {{ $style := resources.Get "css/main.css" | minify | fingerprint }}
 <link rel="stylesheet" href="{{ $style.RelPermalink }}">
-{{ if .Params.game }}
+{{ if or .IsHome .Params.game }}
   <link rel="stylesheet" href="/game/dicezzle/dicezzle-game.css">
 {{ end }}
 {{ partial "share-meta.html" . }}
@@ -15,4 +15,4 @@
 {{ $app := dict "@context" "https://schema.org" "@type" "VideoGame" "name" "Dicezzle" "url" "https://dicezzle.com/play/" "applicationCategory" "Game" "operatingSystem" "Any modern browser" "description" "Place dice, merge three matching dice, create star dice, and keep the board open." }}
 <script type="application/ld+json">{{ $org | jsonify | safeJS }}</script>
 <script type="application/ld+json">{{ $site | jsonify | safeJS }}</script>
-{{ if .Params.game }}<script type="application/ld+json">{{ $app | jsonify | safeJS }}</script>{{ end }}
+{{ if or .IsHome .Params.game }}<script type="application/ld+json">{{ $app | jsonify | safeJS }}</script>{{ end }}

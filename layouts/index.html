@@ -1,20 +1,16 @@
 {{ define "main" }}
-  <section class="hero">
+  <section class="hero hero--game-first">
     <div class="hero__copy">
       <p class="eyebrow">Free browser puzzle</p>
       <h1>Dicezzle</h1>
       <p>A free dice merge puzzle you can play in your browser.</p>
       <div class="hero__actions">
-        <a class="button button--primary" href="/play/">Play Dicezzle</a>
+        <a class="button button--primary" href="#dicezzle-game">Play now</a>
         <a class="button" href="/guide/">How to play</a>
       </div>
     </div>
-    <div class="hero__board" aria-label="Dicezzle board preview">
-      <span>⚀</span><span></span><span>⚁</span><span></span><span>⚂</span>
-      <span></span><span>⚁</span><span></span><span>⚂</span><span></span>
-      <span>⚀</span><span></span><span>⭐</span><span></span><span>⚃</span>
-      <span></span><span>⚄</span><span></span><span>⚃</span><span></span>
-      <span>⚅</span><span></span><span>⚄</span><span></span><span>⚅</span>
+    <div class="hero__game">
+      {{ partial "game-shell.html" . }}
     </div>
   </section>
 

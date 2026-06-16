@@ -18,14 +18,45 @@ export class DiceView {
     body.fillRoundedRect(-size / 2, -size / 2, size, size, Math.max(8, size * 0.16));
     body.strokeRoundedRect(-size / 2, -size / 2, size, size, Math.max(8, size * 0.16));
 
-    const label = scene.add.text(0, isStar ? -1 : 0, DiceModel.label(value), {
-      color: isStar ? '#725207' : '#24312c',
-      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-      fontSize: `${Math.round(size * (isStar ? 0.5 : 0.58))}px`,
-      fontStyle: '700'
-    }).setOrigin(0.5);
+    const face = isStar ? DiceView.drawStar(scene, size) : DiceView.drawPips(scene, size, value);
 
-    group.add([shadow, body, label]);
+    group.add([shadow, body, face]);
+    if (options.alpha !== undefined) {
+      group.setAlpha(options.alpha);
+    }
+    if (options.depth !== undefined) {
+      group.setDepth(options.depth);
+    }
     return group;
+  }
+
+  static drawStar(scene, size) {
+    return scene.add.text(0, -1, DiceModel.label('star'), {
+      color: '#725207',
+      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      fontSize: `${Math.round(size * 0.58)}px`,
+      fontStyle: '800'
+    }).setOrigin(0.5);
+  }
+
+  static drawPips(scene, size, value) {
+    const graphics = scene.add.graphics();
+    graphics.fillStyle(0x24312c, 1);
+    const radius = Math.max(4.5, size * 0.085);
+    const offset = size * 0.24;
+    const positions = {
+      1: [[0, 0]],
+      2: [[-offset, -offset], [offset, offset]],
+      3: [[-offset, -offset], [0, 0], [offset, offset]],
+      4: [[-offset, -offset], [offset, -offset], [-offset, offset], [offset, offset]],
+      5: [[-offset, -offset], [offset, -offset], [0, 0], [-offset, offset], [offset, offset]],
+      6: [[-offset, -offset], [offset, -offset], [-offset, 0], [offset, 0], [-offset, offset], [offset, offset]]
+    };
+
+    (positions[value] ?? positions[1]).forEach(([pipX, pipY]) => {
+      graphics.fillCircle(pipX, pipY, radius);
+    });
+
+    return graphics;
   }
 }

@@ -91,6 +91,34 @@ a {
   padding: clamp(24px, 6vw, 64px) 0;
 }
 
+.hero--game-first {
+  grid-template-columns: minmax(260px, 0.72fr) minmax(360px, 760px);
+  align-items: start;
+  min-height: auto;
+  padding-top: clamp(14px, 3vw, 34px);
+}
+
+.hero--game-first .hero__copy {
+  padding-top: clamp(8px, 4vw, 36px);
+}
+
+.hero--game-first .hero__copy h1 {
+  font-size: clamp(2.8rem, 9vw, 5.6rem);
+}
+
+.hero--game-first .hero__copy p {
+  font-size: clamp(1rem, 2.4vw, 1.22rem);
+}
+
+.hero__game .game-shell {
+  width: 100%;
+  padding: 0;
+}
+
+.hero__game .dicezzle-game-canvas {
+  height: min(58vh, 520px);
+}
+
 .hero__copy h1,
 .page__header h1 {
   margin: 0;
@@ -318,6 +346,19 @@ a {
 
   .hero__board {
     max-width: 430px;
+  }
+
+  .hero--game-first {
+    gap: 18px;
+    padding-top: 12px;
+  }
+
+  .hero--game-first .hero__copy {
+    padding-top: 0;
+  }
+
+  .hero--game-first .hero__actions {
+    display: none;
   }
 
   .related-games,
