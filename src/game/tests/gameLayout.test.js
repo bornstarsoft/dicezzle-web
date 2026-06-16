@@ -33,4 +33,16 @@ describe('calculateGameLayout', () => {
     expect(layout.tray.top - layout.board.bottom).toBeGreaterThanOrEqual(22);
     expect(layout.tray.slotSize - layout.tray.pieceSize).toBeGreaterThanOrEqual(12);
   });
+
+  test('keeps tray touch targets generous and inside the canvas', () => {
+    const layout = calculateGameLayout({ width: 393, height: 430, boardSize: 5, traySize: 3 });
+
+    expect(layout.tray.hitSize).toBeGreaterThanOrEqual(layout.tray.pieceSize + 24);
+    layout.tray.centers.forEach((center) => {
+      expect(center.x - layout.tray.hitSize / 2).toBeGreaterThanOrEqual(0);
+      expect(center.x + layout.tray.hitSize / 2).toBeLessThanOrEqual(layout.width);
+      expect(center.y - layout.tray.hitSize / 2).toBeGreaterThanOrEqual(0);
+      expect(center.y + layout.tray.hitSize / 2).toBeLessThanOrEqual(layout.height);
+    });
+  });
 });

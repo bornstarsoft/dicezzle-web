@@ -561,7 +561,7 @@ export class GameScene extends Phaser.Scene {
       valid: false,
       boardCell: null
     };
-    this.renderGame();
+    this.trayView.setSlotDieVisible(slotIndex, false);
     this.handlePointerMove(pointer);
   }
 

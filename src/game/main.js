@@ -23,10 +23,33 @@ function bootDicezzle() {
       antialias: true,
       pixelArt: false
     },
+    input: {
+      touch: {
+        capture: true
+      },
+      mouse: {
+        preventDefaultDown: true,
+        preventDefaultMove: true,
+        preventDefaultUp: true
+      }
+    },
     scene: [BootScene, GameScene]
   });
 
   window.DicezzleGame = game;
+
+  const applyCanvasTouchGuards = () => {
+    const canvas = parent.querySelector('canvas');
+    if (!canvas) {
+      return;
+    }
+    canvas.style.touchAction = 'none';
+    canvas.style.webkitTouchCallout = 'none';
+    canvas.style.webkitUserSelect = 'none';
+    canvas.style.userSelect = 'none';
+  };
+  applyCanvasTouchGuards();
+  requestAnimationFrame(applyCanvasTouchGuards);
 }
 
 if (document.readyState === 'loading') {
