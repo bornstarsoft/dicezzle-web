@@ -59,7 +59,7 @@ export class TrayView {
 
   drawRack(totalWidth, slotSize, top, gap) {
     const padX = Math.max(9, slotSize * 0.14);
-    const padY = Math.max(7, slotSize * 0.11);
+    const padY = Math.max(8, slotSize * 0.12);
     const rackX = (this.scene.scale.width - totalWidth) / 2 - padX;
     const rackY = top - padY;
     const rackWidth = totalWidth + padX * 2;
@@ -67,13 +67,15 @@ export class TrayView {
     const radius = Math.max(14, slotSize * 0.2);
     const rack = this.scene.add.graphics();
 
-    rack.fillStyle(0x5d3f26, 0.25);
-    rack.fillRoundedRect(rackX + 2, rackY + 7, rackWidth, rackHeight, radius);
-    rack.fillStyle(0xb99461, 1);
+    rack.fillStyle(0x5d3f26, 0.2);
+    rack.fillRoundedRect(rackX + 2, rackY + 6, rackWidth, rackHeight, radius);
+    rack.fillStyle(0xb8925d, 1);
     rack.fillRoundedRect(rackX, rackY, rackWidth, rackHeight, radius);
-    rack.fillStyle(0xdcc19a, 1);
+    rack.fillStyle(0xe0c59e, 1);
     rack.fillRoundedRect(rackX + 3, rackY + 3, rackWidth - 6, rackHeight - 6, radius - 3);
-    rack.lineStyle(3, 0xffefc9, 0.9);
+    rack.fillStyle(0xc59f68, 0.26);
+    rack.fillRoundedRect(rackX + 7, rackY + 7, rackWidth - 14, rackHeight - 14, radius - 7);
+    rack.lineStyle(2, 0xffefc9, 0.88);
     rack.strokeRoundedRect(rackX + 3, rackY + 3, rackWidth - 6, rackHeight - 6, radius - 3);
     rack.lineStyle(1, 0x8f6635, 0.78);
     rack.strokeRoundedRect(rackX, rackY, rackWidth, rackHeight, radius);
@@ -91,31 +93,31 @@ export class TrayView {
     const accentAlpha = selected ? 0.95 : die ? 0.36 : 0.16;
 
     if (selected) {
-      holder.fillStyle(0xffd967, 0.25);
-      holder.fillRoundedRect(left - 7, top - 7, size + 14, size + 14, radius + 7);
-      holder.lineStyle(4, 0xffe677, 0.9);
-      holder.strokeRoundedRect(left - 5, top - 5, size + 10, size + 10, radius + 5);
+      holder.fillStyle(0xffd967, 0.2);
+      holder.fillRoundedRect(left - 4, top - 4, size + 8, size + 8, radius + 4);
+      holder.lineStyle(3, 0xffe677, 0.9);
+      holder.strokeRoundedRect(left - 3, top - 3, size + 6, size + 6, radius + 3);
     }
 
-    holder.fillStyle(0x5d3f26, 0.24);
-    holder.fillRoundedRect(left + 2, top + 5, size, size, radius);
-    holder.fillStyle(0xa88456, 1);
+    holder.fillStyle(0x5d3f26, 0.2);
+    holder.fillRoundedRect(left + 2, top + 4, size, size, radius);
+    holder.fillStyle(0xad8859, 1);
     holder.fillRoundedRect(left, top, size, size, radius);
-    holder.fillStyle(0xd3b78e, 1);
-    holder.fillRoundedRect(left + size * 0.05, top + size * 0.05, size * 0.9, size * 0.86, radius * 0.8);
-    holder.fillStyle(0x795b37, 0.22);
-    holder.fillRoundedRect(left + size * 0.12, top + size * 0.13, size * 0.76, size * 0.68, radius * 0.56);
-    holder.fillStyle(empty ? 0xd9c7ad : 0xead8bd, 1);
-    holder.fillRoundedRect(left + size * 0.17, top + size * 0.16, size * 0.66, size * 0.58, radius * 0.44);
-    holder.fillStyle(0xffffff, 0.2);
-    holder.fillRoundedRect(left + size * 0.19, top + size * 0.18, size * 0.46, size * 0.12, radius * 0.25);
-    holder.lineStyle(selected ? 4 : 2, accent, accentAlpha);
+    holder.fillStyle(0xdfc6a0, 1);
+    holder.fillRoundedRect(left + size * 0.055, top + size * 0.055, size * 0.89, size * 0.84, radius * 0.8);
+    holder.fillStyle(0x795b37, 0.2);
+    holder.fillRoundedRect(left + size * 0.13, top + size * 0.14, size * 0.74, size * 0.66, radius * 0.54);
+    holder.fillStyle(empty ? 0xddcbb2 : 0xefddc1, 1);
+    holder.fillRoundedRect(left + size * 0.18, top + size * 0.17, size * 0.64, size * 0.56, radius * 0.42);
+    holder.fillStyle(0xffffff, 0.22);
+    holder.fillRoundedRect(left + size * 0.21, top + size * 0.19, size * 0.42, size * 0.1, radius * 0.22);
+    holder.lineStyle(selected ? 3 : 2, accent, accentAlpha);
     holder.strokeRoundedRect(left + 1, top + 1, size - 2, size - 2, radius);
     holder.lineStyle(1, 0xfff4df, 0.68);
-    holder.strokeRoundedRect(left + size * 0.17, top + size * 0.16, size * 0.66, size * 0.58, radius * 0.4);
+    holder.strokeRoundedRect(left + size * 0.18, top + size * 0.17, size * 0.64, size * 0.56, radius * 0.4);
 
-    const tabWidth = Math.max(4, size * 0.075);
-    const tabHeight = Math.max(18, size * 0.32);
+    const tabWidth = Math.max(4, size * 0.065);
+    const tabHeight = Math.max(17, size * 0.3);
     holder.fillStyle(0xf2c261, selected ? 1 : 0.74);
     holder.fillRoundedRect(left - tabWidth * 0.45, y - tabHeight / 2, tabWidth, tabHeight, tabWidth);
     holder.fillRoundedRect(left + size - tabWidth * 0.55, y - tabHeight / 2, tabWidth, tabHeight, tabWidth);

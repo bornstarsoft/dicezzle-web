@@ -72,7 +72,7 @@
 
 .dicezzle-game-canvas {
   width: 100%;
-  height: clamp(420px, 54svh, 560px);
+  height: clamp(430px, 55svh, 560px);
   min-height: 0;
   overflow: hidden;
   border: 1px solid #cddbd3;
@@ -238,7 +238,7 @@
   }
 
   .dicezzle-game-canvas {
-    height: clamp(420px, 50svh, 450px);
+    height: clamp(430px, 53svh, 460px);
   }
 
   .tutorial-hint {

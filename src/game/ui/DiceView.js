@@ -1,5 +1,9 @@
 import { DiceStyle } from './DiceStyle.js';
 
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
 export class DiceView {
   static draw(scene, x, y, size, value, options = {}) {
     const group = scene.add.container(x, y);
@@ -7,50 +11,53 @@ export class DiceView {
     const style = DiceStyle.forValue(value);
     const fill = options.fill ?? DiceStyle.hexToNumber(style.fill);
     const stroke = options.selected ? 0xf4bf45 : DiceStyle.hexToNumber(style.stroke);
-    const lineWidth = options.selected ? Math.max(4, size * 0.068) : Math.max(2, size * 0.038);
-    const radius = Math.max(12, size * 0.23);
+    const lineWidth = options.selected ? Math.max(2, size * 0.042) : Math.max(2, size * 0.034);
+    const radius = Math.max(11, size * 0.22);
 
     const shadow = scene.add.graphics();
-    shadow.fillStyle(DiceStyle.hexToNumber(style.shadow), options.drag ? 0.32 : 0.25);
-    shadow.fillEllipse(size * 0.04, size * 0.42, size * 0.9, size * 0.24);
+    shadow.fillStyle(DiceStyle.hexToNumber(style.shadow), options.drag ? 0.34 : 0.23);
+    shadow.fillEllipse(size * 0.04, size * 0.43, size * 0.82, size * 0.2);
 
     const selectedGlow = scene.add.graphics();
-    if (options.selected || options.drag) {
-      selectedGlow.lineStyle(Math.max(4, size * 0.065), options.selected ? 0xffdf66 : DiceStyle.hexToNumber(style.glow), options.drag ? 0.76 : 0.9);
-      selectedGlow.strokeRoundedRect(-size / 2 - size * 0.09, -size / 2 - size * 0.1, size * 1.18, size * 1.15, radius * 1.28);
-      selectedGlow.fillStyle(DiceStyle.hexToNumber(style.glow), options.drag ? 0.2 : 0.15);
-      selectedGlow.fillRoundedRect(-size / 2 - size * 0.12, -size / 2 - size * 0.12, size * 1.24, size * 1.2, radius * 1.35);
+    if (options.drag) {
+      selectedGlow.lineStyle(Math.max(3, size * 0.052), DiceStyle.hexToNumber(style.glow), 0.76);
+      selectedGlow.strokeRoundedRect(-size * 0.56, -size * 0.58, size * 1.12, size * 1.08, radius * 1.2);
+      selectedGlow.fillStyle(DiceStyle.hexToNumber(style.glow), 0.16);
+      selectedGlow.fillRoundedRect(-size * 0.58, -size * 0.6, size * 1.16, size * 1.12, radius * 1.26);
+    } else if (options.selected) {
+      selectedGlow.lineStyle(Math.max(2, size * 0.03), 0xffe177, 0.9);
+      selectedGlow.strokeRoundedRect(-size * 0.515, -size * 0.52, size * 1.03, size * 0.96, radius * 1.05);
     }
 
     const cube = scene.add.graphics();
-    cube.fillStyle(DiceStyle.hexToNumber(style.shadow), 0.18);
-    cube.fillRoundedRect(-size / 2 + size * 0.02, -size / 2 + size * 0.1, size, size * 0.88, radius);
+    cube.fillStyle(DiceStyle.hexToNumber(style.shadow), 0.2);
+    cube.fillRoundedRect(-size * 0.47, -size * 0.36, size * 0.94, size * 0.84, radius);
     cube.fillStyle(DiceStyle.hexToNumber(style.side), 1);
-    cube.fillRoundedRect(-size / 2, -size / 2 + size * 0.14, size, size * 0.86, radius);
-    cube.fillStyle(DiceStyle.hexToNumber(style.shadow), 0.18);
-    cube.fillRoundedRect(-size / 2, size * 0.2, size, size * 0.31, radius * 0.78);
-    cube.fillStyle(0xffffff, 0.12);
-    cube.fillRoundedRect(-size / 2 + size * 0.05, -size / 2 + size * 0.15, size * 0.9, size * 0.16, radius * 0.62);
+    cube.fillRoundedRect(-size * 0.5, -size * 0.35, size, size * 0.84, radius);
+    cube.fillStyle(DiceStyle.hexToNumber(style.shadow), 0.22);
+    cube.fillRoundedRect(-size * 0.47, size * 0.18, size * 0.94, size * 0.26, radius * 0.7);
+    cube.lineStyle(Math.max(1, size * 0.018), DiceStyle.hexToNumber(style.shadow), 0.28);
+    cube.strokeRoundedRect(-size * 0.5, -size * 0.35, size, size * 0.84, radius);
 
     const body = scene.add.graphics();
     body.fillStyle(fill, 1);
     body.lineStyle(lineWidth, stroke, 1);
-    body.fillRoundedRect(-size / 2, -size / 2 - size * 0.04, size, size * 0.88, radius);
-    body.strokeRoundedRect(-size / 2, -size / 2 - size * 0.04, size, size * 0.88, radius);
+    body.fillRoundedRect(-size * 0.48, -size * 0.5, size * 0.96, size * 0.78, radius);
+    body.strokeRoundedRect(-size * 0.48, -size * 0.5, size * 0.96, size * 0.78, radius);
 
     const rim = scene.add.graphics();
-    rim.lineStyle(Math.max(1, size * 0.02), DiceStyle.hexToNumber(style.rim), 0.64);
-    rim.strokeRoundedRect(-size / 2 + size * 0.065, -size / 2 + size * 0.02, size * 0.87, size * 0.7, radius * 0.68);
-    rim.lineStyle(Math.max(1, size * 0.016), DiceStyle.hexToNumber(style.shadow), 0.2);
-    rim.strokeRoundedRect(-size / 2 + size * 0.015, -size / 2 - size * 0.02, size * 0.97, size * 0.82, radius * 0.9);
+    rim.lineStyle(Math.max(1, size * 0.018), DiceStyle.hexToNumber(style.rim), 0.7);
+    rim.strokeRoundedRect(-size * 0.41, -size * 0.43, size * 0.82, size * 0.6, radius * 0.66);
+    rim.lineStyle(Math.max(1, size * 0.014), DiceStyle.hexToNumber(style.shadow), 0.16);
+    rim.strokeRoundedRect(-size * 0.465, -size * 0.475, size * 0.93, size * 0.73, radius * 0.88);
 
     const shine = scene.add.graphics();
-    shine.fillStyle(DiceStyle.hexToNumber(style.highlight), 0.5);
-    shine.fillRoundedRect(-size * 0.33, -size * 0.42, size * 0.6, size * 0.18, radius * 0.48);
-    shine.fillStyle(0xffffff, 0.23);
-    shine.fillCircle(-size * 0.23, -size * 0.24, size * 0.095);
-    shine.fillStyle(0xffffff, 0.08);
-    shine.fillCircle(size * 0.26, -size * 0.22, size * 0.05);
+    shine.fillStyle(DiceStyle.hexToNumber(style.highlight), 0.42);
+    shine.fillRoundedRect(-size * 0.31, -size * 0.43, size * 0.55, size * 0.13, radius * 0.42);
+    shine.fillStyle(0xffffff, 0.18);
+    shine.fillRoundedRect(-size * 0.35, -size * 0.44, size * 0.42, size * 0.07, radius * 0.26);
+    shine.fillStyle(0xffffff, 0.16);
+    shine.fillCircle(size * 0.24, -size * 0.24, size * 0.042);
 
     const face = isStar ? DiceView.drawStar(scene, size, style) : DiceView.drawPips(scene, size, value, style);
 
@@ -64,14 +71,69 @@ export class DiceView {
     return group;
   }
 
+  static getFaceGeometry(size) {
+    const centerY = -size * 0.07;
+    return {
+      centerX: 0,
+      centerY,
+      safe: {
+        left: -size * 0.32,
+        right: size * 0.32,
+        top: -size * 0.36,
+        bottom: size * 0.22
+      }
+    };
+  }
+
+  static getPipLayout(size, value) {
+    const { centerX, centerY, safe } = DiceView.getFaceGeometry(size);
+    const radius = clamp(size * 0.076, 4.1, 6.2);
+    const offset = size * 0.18;
+    const grid = {
+      left: centerX - offset,
+      center: centerX,
+      right: centerX + offset,
+      top: centerY - offset,
+      middle: centerY,
+      bottom: centerY + offset
+    };
+    const positions = {
+      1: [[grid.center, grid.middle]],
+      2: [[grid.left, grid.top], [grid.right, grid.bottom]],
+      3: [[grid.left, grid.top], [grid.center, grid.middle], [grid.right, grid.bottom]],
+      4: [[grid.left, grid.top], [grid.right, grid.top], [grid.left, grid.bottom], [grid.right, grid.bottom]],
+      5: [[grid.left, grid.top], [grid.right, grid.top], [grid.center, grid.middle], [grid.left, grid.bottom], [grid.right, grid.bottom]],
+      6: [[grid.left, grid.top], [grid.right, grid.top], [grid.left, grid.middle], [grid.right, grid.middle], [grid.left, grid.bottom], [grid.right, grid.bottom]]
+    };
+
+    return {
+      centerX,
+      centerY,
+      safe,
+      radius,
+      positions: (positions[value] ?? positions[1]).map(([pipX, pipY]) => ({ x: pipX, y: pipY }))
+    };
+  }
+
+  static getStarLayout(size) {
+    const { centerX, centerY, safe } = DiceView.getFaceGeometry(size);
+    return {
+      centerX,
+      centerY,
+      safe,
+      outerRadius: size * 0.24
+    };
+  }
+
   static drawStar(scene, size, style) {
-    const star = scene.add.container(0, -size * 0.05);
+    const layout = DiceView.getStarLayout(size);
+    const star = scene.add.container(0, 0);
     const shadow = scene.add.graphics();
-    DiceView.drawStarShape(shadow, size * 0.31, size * 0.025, size * 0.045, DiceStyle.hexToNumber(style.pipShadow), 0.72, 0x6d4307, 0.5);
+    DiceView.drawStarShape(shadow, layout.outerRadius, layout.centerX + size * 0.018, layout.centerY + size * 0.032, DiceStyle.hexToNumber(style.pipShadow), 0.64, 0x6d4307, 0.45);
     const face = scene.add.graphics();
-    DiceView.drawStarShape(face, size * 0.31, 0, 0, DiceStyle.hexToNumber(style.pip), 1, DiceStyle.hexToNumber(style.pipShadow), 0.8);
+    DiceView.drawStarShape(face, layout.outerRadius, layout.centerX, layout.centerY, DiceStyle.hexToNumber(style.pip), 1, DiceStyle.hexToNumber(style.pipShadow), 0.82);
     const shine = scene.add.graphics();
-    DiceView.drawStarShape(shine, size * 0.16, -size * 0.05, -size * 0.06, 0xffffff, 0.3, 0xffffff, 0);
+    DiceView.drawStarShape(shine, layout.outerRadius * 0.48, layout.centerX - size * 0.04, layout.centerY - size * 0.055, 0xffffff, 0.3, 0xffffff, 0);
     star.add([shadow, face, shine]);
     return star;
   }
@@ -101,26 +163,20 @@ export class DiceView {
 
   static drawPips(scene, size, value, style) {
     const graphics = scene.add.graphics();
-    const radius = Math.max(5.6, size * 0.1);
-    const offset = size * 0.235;
-    const positions = {
-      1: [[0, 0]],
-      2: [[-offset, -offset], [offset, offset]],
-      3: [[-offset, -offset], [0, 0], [offset, offset]],
-      4: [[-offset, -offset], [offset, -offset], [-offset, offset], [offset, offset]],
-      5: [[-offset, -offset], [offset, -offset], [0, 0], [-offset, offset], [offset, offset]],
-      6: [[-offset, -offset], [offset, -offset], [-offset, 0], [offset, 0], [-offset, offset], [offset, offset]]
-    };
+    const layout = DiceView.getPipLayout(size, value);
+    const { radius } = layout;
 
-    (positions[value] ?? positions[1]).forEach(([pipX, pipY]) => {
-      graphics.fillStyle(DiceStyle.hexToNumber(style.shadow), 0.42);
-      graphics.fillCircle(pipX + size * 0.025, pipY + size * 0.032, radius * 1.22);
-      graphics.fillStyle(DiceStyle.hexToNumber(style.pipShadow), 0.74);
-      graphics.fillCircle(pipX + size * 0.012, pipY + size * 0.018, radius * 1.07);
+    layout.positions.forEach(({ x: pipX, y: pipY }) => {
+      graphics.fillStyle(DiceStyle.hexToNumber(style.shadow), 0.28);
+      graphics.fillCircle(pipX + radius * 0.2, pipY + radius * 0.26, radius * 1.2);
+      graphics.fillStyle(DiceStyle.hexToNumber(style.pipShadow), 0.82);
+      graphics.fillCircle(pipX, pipY, radius * 1.05);
       graphics.fillStyle(DiceStyle.hexToNumber(style.pip), 1);
-      graphics.fillCircle(pipX - size * 0.005, pipY - size * 0.006, radius * 0.9);
-      graphics.lineStyle(Math.max(1, size * 0.014), 0xffffff, 0.42);
-      graphics.strokeCircle(pipX - size * 0.012, pipY - size * 0.012, radius * 0.72);
+      graphics.fillCircle(pipX - radius * 0.06, pipY - radius * 0.08, radius * 0.78);
+      graphics.fillStyle(0xffffff, 0.42);
+      graphics.fillCircle(pipX - radius * 0.22, pipY - radius * 0.24, radius * 0.2);
+      graphics.lineStyle(Math.max(1, size * 0.011), 0xffffff, 0.28);
+      graphics.strokeCircle(pipX - radius * 0.04, pipY - radius * 0.06, radius * 0.76);
     });
 
     return graphics;

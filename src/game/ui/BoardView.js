@@ -48,16 +48,18 @@ export class BoardView {
   }
 
   drawBoardFrame(originX, originY, boardSize, cellSize) {
-    const padding = Math.max(7, cellSize * 0.12);
-    const radius = Math.max(18, cellSize * 0.25);
+    const padding = Math.max(6, cellSize * 0.1);
+    const radius = Math.max(18, cellSize * 0.24);
     const frame = this.scene.add.graphics();
-    frame.fillStyle(0x5c422a, 0.24);
-    frame.fillRoundedRect(originX - padding + 2, originY - padding + 7, boardSize + padding * 2, boardSize + padding * 2, radius);
-    frame.fillStyle(0xb89d76, 1);
+    frame.fillStyle(0x5c422a, 0.2);
+    frame.fillRoundedRect(originX - padding + 2, originY - padding + 6, boardSize + padding * 2, boardSize + padding * 2, radius);
+    frame.fillStyle(0xb99d74, 1);
     frame.fillRoundedRect(originX - padding, originY - padding, boardSize + padding * 2, boardSize + padding * 2, radius);
-    frame.fillStyle(0xe1cfb1, 1);
+    frame.fillStyle(0xe6d7bd, 1);
     frame.fillRoundedRect(originX - padding + 3, originY - padding + 3, boardSize + padding * 2 - 6, boardSize + padding * 2 - 6, radius - 3);
-    frame.lineStyle(Math.max(2, cellSize * 0.04), 0xfff2da, 0.95);
+    frame.fillStyle(0xd0b98f, 0.5);
+    frame.fillRoundedRect(originX - padding + 7, originY - padding + 7, boardSize + padding * 2 - 14, boardSize + padding * 2 - 14, radius - 7);
+    frame.lineStyle(Math.max(2, cellSize * 0.032), 0xfff2da, 0.92);
     frame.strokeRoundedRect(originX - padding + 3, originY - padding + 3, boardSize + padding * 2 - 6, boardSize + padding * 2 - 6, radius - 3);
     frame.lineStyle(Math.max(1, cellSize * 0.02), 0xa88d68, 0.8);
     frame.strokeRoundedRect(originX - padding, originY - padding, boardSize + padding * 2, boardSize + padding * 2, radius);
@@ -69,8 +71,8 @@ export class BoardView {
     const cell = this.scene.add.graphics();
     const validGlow = state.isPreview && state.previewValid;
     const invalidGlow = state.isPreview && !state.previewValid;
-    const idleFill = state.isValid ? 0xece3d3 : 0xd8c7ad;
-    const stroke = validGlow ? 0x72d8ff : invalidGlow ? 0xdf6758 : state.isValid ? 0xc2a47a : 0x937656;
+    const idleFill = state.isValid ? 0xf0e6d6 : 0xdeccb1;
+    const stroke = validGlow ? 0x72d8ff : invalidGlow ? 0xdf6758 : state.isValid ? 0xc7a978 : 0x987a56;
     const strokeAlpha = validGlow || invalidGlow ? 1 : state.isValid ? 0.9 : 0.82;
 
     if (validGlow || invalidGlow) {
@@ -80,20 +82,22 @@ export class BoardView {
       cell.strokeRoundedRect(x - 4, y - 4, size + 8, size + 8, radius + 4);
     }
 
-    cell.fillStyle(0x5d4228, 0.24);
-    cell.fillRoundedRect(x + size * 0.04, y + size * 0.07, size, size, radius);
-    cell.fillStyle(0xa98d67, 1);
+    cell.fillStyle(0x5d4228, 0.2);
+    cell.fillRoundedRect(x + size * 0.035, y + size * 0.055, size, size, radius);
+    cell.fillStyle(0xb49368, 1);
     cell.fillRoundedRect(x, y, size, size, radius);
-    cell.fillStyle(0x7b6142, 0.28);
-    cell.fillRoundedRect(x + size * 0.06, y + size * 0.08, size * 0.88, size * 0.82, radius * 0.72);
+    cell.fillStyle(0xefdfc6, 1);
+    cell.fillRoundedRect(x + size * 0.045, y + size * 0.045, size * 0.91, size * 0.86, radius * 0.82);
+    cell.fillStyle(0x7b6142, 0.22);
+    cell.fillRoundedRect(x + size * 0.1, y + size * 0.11, size * 0.8, size * 0.7, radius * 0.6);
     cell.fillStyle(idleFill, 1);
-    cell.fillRoundedRect(x + size * 0.11, y + size * 0.1, size * 0.78, size * 0.7, radius * 0.54);
-    cell.fillStyle(0xffffff, 0.22);
-    cell.fillRoundedRect(x + size * 0.14, y + size * 0.12, size * 0.58, size * 0.14, radius * 0.34);
-    cell.lineStyle(state.isPreview ? 4 : 2, stroke, strokeAlpha);
+    cell.fillRoundedRect(x + size * 0.15, y + size * 0.14, size * 0.7, size * 0.61, radius * 0.48);
+    cell.fillStyle(0xffffff, 0.24);
+    cell.fillRoundedRect(x + size * 0.18, y + size * 0.16, size * 0.48, size * 0.1, radius * 0.26);
+    cell.lineStyle(state.isPreview ? 3 : 2, stroke, strokeAlpha);
     cell.strokeRoundedRect(x + 1, y + 1, size - 2, size - 2, radius);
     cell.lineStyle(1, 0xfff6e8, 0.7);
-    cell.strokeRoundedRect(x + size * 0.11, y + size * 0.1, size * 0.78, size * 0.7, radius * 0.5);
+    cell.strokeRoundedRect(x + size * 0.15, y + size * 0.14, size * 0.7, size * 0.61, radius * 0.44);
     return cell;
   }
 

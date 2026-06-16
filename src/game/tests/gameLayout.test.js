@@ -26,4 +26,11 @@ describe('calculateGameLayout', () => {
     expect(layout.drag.dieSize).toBe(layout.board.dieSize);
     expect(layout.tray.slotSize).toBeGreaterThan(layout.board.dieSize);
   });
+
+  test('keeps tray rack visibly separated from the board frame on mobile', () => {
+    const layout = calculateGameLayout({ width: 393, height: 430, boardSize: 5, traySize: 3 });
+
+    expect(layout.tray.top - layout.board.bottom).toBeGreaterThanOrEqual(22);
+    expect(layout.tray.slotSize - layout.tray.pieceSize).toBeGreaterThanOrEqual(12);
+  });
 });

@@ -134,7 +134,7 @@ a {
 }
 
 .hero__game .dicezzle-game-canvas {
-  height: clamp(420px, 52svh, 500px);
+  height: clamp(430px, 54svh, 500px);
 }
 
 .hero__copy h1,
@@ -439,7 +439,7 @@ a {
   }
 
   .hero__game .dicezzle-game-canvas {
-    height: clamp(420px, 50svh, 450px);
+    height: clamp(430px, 53svh, 460px);
   }
 
   .page {
