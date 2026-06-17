@@ -11,19 +11,35 @@
   display: grid;
   gap: 10px;
   width: min(100%, 720px);
+  max-width: 100%;
+  min-width: 0;
   margin: 0 auto;
   padding: 10px;
 }
 
 .game-panel {
   display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.game-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
+  min-height: 38px;
+}
+
+.game-topbar__spacer {
+  min-width: 1px;
 }
 
 .game-hud {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
   gap: 8px;
+  min-width: 0;
 }
 
 .game-hud div {
@@ -156,8 +172,10 @@
 
 .dicezzle-game-canvas {
   width: 100%;
-  height: clamp(430px, 55svh, 560px);
+  max-width: 100%;
+  height: clamp(410px, 52svh, 540px);
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
   border: 1px solid #cddbd3;
   border-radius: 8px;
@@ -181,6 +199,10 @@
   gap: 10px;
 }
 
+.game-actions {
+  justify-content: flex-end;
+}
+
 .game-actions button,
 .result-panel__actions button,
 .tutorial-hint button {
@@ -196,6 +218,13 @@
 }
 
 .game-actions button:first-child,
+.result-panel__actions button:first-child {
+  background: #ffffff;
+  border-color: #b7c9b2;
+  color: #23342e;
+}
+
+.game-actions button:last-child,
 .result-panel__actions button:first-child {
   background: #315f50;
   border-color: #315f50;
@@ -306,8 +335,26 @@
 
 @media (max-width: 430px) {
   .game-shell {
-    padding: 6px;
-    gap: 8px;
+    padding: 4px 6px 6px;
+    gap: 6px;
+  }
+
+  .game-panel {
+    gap: 6px;
+  }
+
+  .game-topbar {
+    min-height: 34px;
+  }
+
+  .game-actions {
+    gap: 7px;
+  }
+
+  .game-actions button {
+    min-height: 36px;
+    padding: 0 10px;
+    font-size: 0.82rem;
   }
 
   .game-hud {
@@ -327,7 +374,7 @@
   }
 
   .dicezzle-game-canvas {
-    height: clamp(430px, 53svh, 460px);
+    height: clamp(404px, 48svh, 430px);
   }
 
   .tutorial-hint {

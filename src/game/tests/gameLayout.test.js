@@ -34,6 +34,16 @@ describe('calculateGameLayout', () => {
     expect(layout.tray.slotSize - layout.tray.pieceSize).toBeGreaterThanOrEqual(12);
   });
 
+  test('keeps an iPhone-sized compact canvas playable with a smaller tray rack', () => {
+    const layout = calculateGameLayout({ width: 393, height: 404, boardSize: 5, traySize: 3 });
+
+    expect(layout.board.originY).toBeLessThanOrEqual(8);
+    expect(layout.board.cellSize).toBeGreaterThanOrEqual(56);
+    expect(layout.tray.slotSize).toBeLessThanOrEqual(74);
+    expect(layout.tray.top - layout.board.bottom).toBeGreaterThanOrEqual(18);
+    expect(layout.tray.bottom).toBeLessThanOrEqual(layout.height - layout.bottomMargin);
+  });
+
   test('keeps tray touch targets generous and inside the canvas', () => {
     const layout = calculateGameLayout({ width: 393, height: 430, boardSize: 5, traySize: 3 });
 
