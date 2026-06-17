@@ -13,6 +13,7 @@ import { DiceView } from '../ui/DiceView.js';
 import { DiceStyle } from '../ui/DiceStyle.js';
 import { calculateGameLayout } from '../ui/GameLayout.js';
 import { buildMergeGatherPlan } from '../ui/MergePath.js';
+import { getStackLayerPoint, STACK_LAYER_SCALE } from '../ui/MergeStack.js';
 import { applyMergeVisualEvent, createHiddenCellSet, hideMergeSourceCell } from '../ui/MergeVisualState.js';
 import { ResultPanel } from '../ui/ResultPanel.js';
 import { ToastView } from '../ui/ToastView.js';
@@ -366,11 +367,18 @@ export class GameScene extends Phaser.Scene {
       hideMergeSourceCell(hiddenCells, step.from);
       renderVisualBoard();
     };
+    const hideStackBaseCell = (cell) => {
+      if (!visualBoard) {
+        return;
+      }
+      hideMergeSourceCell(hiddenCells, cell);
+      renderVisualBoard();
+    };
 
     if (event.type === 'starClear') {
-      this.playStarClearAnimation(event, { board: visualBoard, onSourceStart: hideSourceCell, onComplete: finishEvent });
+      this.playStarClearAnimation(event, { board: visualBoard, onStackBaseStart: hideStackBaseCell, onSourceStart: hideSourceCell, onComplete: finishEvent });
     } else {
-      this.playMergeAnimation(event, { board: visualBoard, onSourceStart: hideSourceCell, onComplete: finishEvent });
+      this.playMergeAnimation(event, { board: visualBoard, onStackBaseStart: hideStackBaseCell, onSourceStart: hideSourceCell, onComplete: finishEvent });
     }
   }
 
@@ -388,6 +396,13 @@ export class GameScene extends Phaser.Scene {
       dieSize: targetCenter.dieSize ?? targetCenter.size * 0.96,
       cellSize: targetCenter.size,
       isSpecial: event.createdValue === 'star',
+      stackBase: {
+        row: event.target.row,
+        col: event.target.col,
+        x: targetCenter.x,
+        y: targetCenter.y
+      },
+      onStackBaseStart: options.onStackBaseStart,
       onStepStart: options.onSourceStart,
       onComplete: options.onComplete
     });
@@ -426,13 +441,25 @@ export class GameScene extends Phaser.Scene {
     return blockers;
   }
 
-  playGatherPlan({ plan, value, dieSize, cellSize, isSpecial = false, onStepStart, onComplete }) {
-    if (!plan.steps.length) {
+  playGatherPlan({ plan, value, dieSize, cellSize, isSpecial = false, stackBase, onStackBaseStart, onStepStart, onComplete }) {
+    if (!plan.steps.length || !stackBase) {
       onComplete?.();
       return;
     }
 
-    const stackOverlays = [];
+    onStackBaseStart?.(stackBase);
+    const stackOverlays = [{
+      overlay: this.createStackOverlay({
+        x: stackBase.x,
+        y: stackBase.y,
+        value,
+        dieSize,
+        layerIndex: 0,
+        totalLayers: plan.steps.length + 1,
+        cellSize
+      }),
+      layerIndex: 0
+    }];
     let completedSteps = 0;
     const stepDelay = 82;
     plan.steps.forEach((step, index) => {
@@ -450,10 +477,10 @@ export class GameScene extends Phaser.Scene {
         overlay.setDepth(72 + step.stage * 0.2);
         this.animateAlongPath(overlay, path, cellSize, 1, {
           keepAlive: true,
-          pathEndScale: 0.78,
+          pathEndScale: 1,
           onComplete: () => {
-            this.landStackOverlay(overlay, step, plan.steps.length, cellSize, () => {
-              stackOverlays.push({ overlay, stage: step.stage });
+            this.landStackOverlay(overlay, step, plan.steps.length + 1, cellSize, () => {
+              stackOverlays.push({ overlay, layerIndex: step.stage + 1 });
               completedSteps += 1;
               if (completedSteps === plan.steps.length) {
                 this.playStackBounce(stackOverlays, value, cellSize, isSpecial, onComplete);
@@ -465,26 +492,35 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  getStackPoint(point, stage, total, cellSize) {
-    const stackOffset = Math.min(cellSize * 0.09, 7);
-    const centeredStage = stage - (total - 1) / 2;
-    return {
-      x: point.x + centeredStage * Math.min(cellSize * 0.018, 1.3),
-      y: point.y - stage * stackOffset
-    };
+  createStackOverlay({ x, y, value, dieSize, layerIndex, totalLayers, cellSize }) {
+    const stackPoint = this.getStackPoint({ x, y }, layerIndex, totalLayers, cellSize);
+    const overlay = DiceView.draw(this, stackPoint.x, stackPoint.y, dieSize, value, {
+      alpha: 0.96,
+      depth: 72 + layerIndex,
+      drag: true
+    });
+    overlay.setScale(STACK_LAYER_SCALE);
+    this.mergeAnimationObjects.push(overlay);
+    return overlay;
+  }
+
+  getStackPoint(point, layerIndex, total, cellSize) {
+    return getStackLayerPoint(point, layerIndex, total, cellSize);
   }
 
   landStackOverlay(overlay, step, totalSteps, cellSize, onComplete) {
     const target = step.stackPath?.[step.stackPath.length - 1] ?? step.path[step.path.length - 1];
-    const stackPoint = this.getStackPoint(target, step.stage, totalSteps, cellSize);
+    const layerIndex = step.stage + 1;
+    const stackPoint = this.getStackPoint(target, layerIndex, totalSteps, cellSize);
+    overlay.setDepth(72 + layerIndex);
     this.tweens.add({
       targets: overlay,
       x: stackPoint.x,
       y: stackPoint.y,
-      scaleX: 0.78,
-      scaleY: 0.78,
+      scaleX: STACK_LAYER_SCALE,
+      scaleY: STACK_LAYER_SCALE,
       alpha: 0.96,
-      duration: 72,
+      duration: 64,
       ease: 'Back.easeOut',
       onComplete
     });
@@ -492,7 +528,7 @@ export class GameScene extends Phaser.Scene {
 
   playStackBounce(stackOverlays, value, cellSize, isSpecial, onComplete) {
     const overlays = stackOverlays
-      .sort((left, right) => left.stage - right.stage)
+      .sort((left, right) => left.layerIndex - right.layerIndex)
       .map((item) => item.overlay)
       .filter((overlay) => overlay && !overlay.destroyed);
 
@@ -518,20 +554,20 @@ export class GameScene extends Phaser.Scene {
 
     this.tweens.add({
       targets: overlays,
-      scaleX: 0.9,
-      scaleY: 0.58,
+      scaleX: 1.04,
+      scaleY: 0.92,
       y: '+=4',
-      duration: 70,
+      duration: 78,
       ease: 'Cubic.easeOut',
       yoyo: true,
       onComplete: () => {
         this.tweens.add({
           targets: overlays,
-          scaleX: 0.18,
-          scaleY: 0.18,
+          scaleX: STACK_LAYER_SCALE,
+          scaleY: STACK_LAYER_SCALE,
           alpha: 0,
-          duration: 85,
-          ease: 'Cubic.easeIn',
+          duration: 70,
+          ease: 'Sine.easeOut',
           onComplete: () => {
             overlays.forEach((overlay) => overlay.destroy());
             onComplete?.();
@@ -664,6 +700,13 @@ export class GameScene extends Phaser.Scene {
       dieSize: targetCenter.dieSize ?? targetCenter.size * 0.96,
       cellSize: targetCenter.size,
       isSpecial: true,
+      stackBase: {
+        row: event.target.row,
+        col: event.target.col,
+        x: targetCenter.x,
+        y: targetCenter.y
+      },
+      onStackBaseStart: options.onStackBaseStart,
       onStepStart: options.onSourceStart,
       onComplete: () => {
         const burst = this.add.circle(targetCenter.x, targetCenter.y, targetCenter.size * 0.45, 0xf4bf45, 0.32).setDepth(69);
