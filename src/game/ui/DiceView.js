@@ -126,21 +126,46 @@ export class DiceView {
       centerX,
       centerY,
       safe,
-      outerRadius: size * 0.225
+      outerRadius: size * 0.255
     };
   }
 
   static drawStar(scene, size, style) {
     const layout = DiceView.getStarLayout(size);
     const star = scene.add.container(0, 0);
+    const starScale = style.starScale ?? 1;
+    const outerRadius = layout.outerRadius * starScale;
+    const glow = scene.add.graphics();
+    glow.fillStyle(DiceStyle.hexToNumber(style.starGlow ?? style.glow), 0.28);
+    glow.fillCircle(layout.centerX, layout.centerY, outerRadius * 1.08);
+    glow.lineStyle(Math.max(1, size * 0.018), DiceStyle.hexToNumber(style.glow), 0.5);
+    glow.strokeCircle(layout.centerX, layout.centerY, outerRadius * 1.18);
     const shadow = scene.add.graphics();
-    DiceView.drawStarShape(shadow, layout.outerRadius, layout.centerX + size * 0.018, layout.centerY + size * 0.032, DiceStyle.hexToNumber(style.pipShadow), 0.64, 0x6d4307, 0.45);
+    DiceView.drawStarShape(shadow, outerRadius, layout.centerX + size * 0.02, layout.centerY + size * 0.036, DiceStyle.hexToNumber(style.pipShadow), 0.7, 0x5a3304, 0.5);
     const face = scene.add.graphics();
-    DiceView.drawStarShape(face, layout.outerRadius, layout.centerX, layout.centerY, DiceStyle.hexToNumber(style.pip), 1, DiceStyle.hexToNumber(style.pipShadow), 0.82);
+    DiceView.drawStarShape(face, outerRadius, layout.centerX, layout.centerY, DiceStyle.hexToNumber(style.pip), 1, DiceStyle.hexToNumber(style.pipShadow), 0.88);
     const shine = scene.add.graphics();
-    DiceView.drawStarShape(shine, layout.outerRadius * 0.48, layout.centerX - size * 0.04, layout.centerY - size * 0.055, 0xffffff, 0.3, 0xffffff, 0);
-    star.add([shadow, face, shine]);
+    DiceView.drawStarShape(shine, outerRadius * 0.42, layout.centerX - size * 0.04, layout.centerY - size * 0.058, 0xffffff, 0.36, 0xffffff, 0);
+    const sparkles = scene.add.graphics();
+    DiceView.drawStarSparkles(sparkles, layout, size, style);
+    star.add([glow, shadow, face, shine, sparkles]);
     return star;
+  }
+
+  static drawStarSparkles(graphics, layout, size, style) {
+    const sparkle = DiceStyle.hexToNumber(style.sparkle ?? style.rim);
+    const points = [
+      { x: layout.centerX - size * 0.25, y: layout.centerY - size * 0.22, r: size * 0.018 },
+      { x: layout.centerX + size * 0.24, y: layout.centerY - size * 0.17, r: size * 0.014 },
+      { x: layout.centerX + size * 0.22, y: layout.centerY + size * 0.22, r: size * 0.012 }
+    ];
+
+    points.forEach((point) => {
+      graphics.fillStyle(sparkle, 0.72);
+      graphics.fillCircle(point.x, point.y, point.r);
+      graphics.lineStyle(Math.max(1, point.r * 0.55), 0xffffff, 0.42);
+      graphics.strokeCircle(point.x, point.y, point.r * 1.5);
+    });
   }
 
   static drawStarShape(graphics, outerRadius, x, y, fill, alpha, stroke, strokeAlpha) {

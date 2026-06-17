@@ -24,16 +24,16 @@ const VALUE_STYLES = {
     glow: '#7ee7de'
   },
   3: {
-    name: 'warm gold',
-    fill: '#ffc32e',
-    highlight: '#ffe68a',
-    side: '#c78409',
-    stroke: '#a76e06',
-    rim: '#fff0a8',
+    name: 'sunny yellow',
+    fill: '#f7c94a',
+    highlight: '#ffec9a',
+    side: '#bd861d',
+    stroke: '#8b6515',
+    rim: '#fff2b5',
     pip: '#fff9ee',
-    pipShadow: '#79500a',
-    shadow: '#87570a',
-    glow: '#ffd85c'
+    pipShadow: '#6e5015',
+    shadow: '#765212',
+    glow: '#ffdb70'
   },
   4: {
     name: 'soft orange',
@@ -72,16 +72,20 @@ const VALUE_STYLES = {
     glow: '#b596ef'
   },
   star: {
-    name: 'star gold',
-    fill: '#ffd15b',
-    highlight: '#fff0a8',
-    side: '#c8860b',
-    stroke: '#a86b08',
-    rim: '#fff5bc',
-    pip: '#fff8d8',
-    pipShadow: '#8b5d08',
-    shadow: '#855507',
-    glow: '#ffd967'
+    name: 'treasure amber star',
+    fill: '#e49a12',
+    highlight: '#ffe18a',
+    side: '#a85f06',
+    stroke: '#563003',
+    rim: '#fff0a0',
+    pip: '#fff8cc',
+    pipShadow: '#8f5204',
+    shadow: '#5f3604',
+    glow: '#ffc84d',
+    starGlow: '#fff0a8',
+    sparkle: '#ffe58a',
+    starScale: 1.18,
+    special: true
   }
 };
 

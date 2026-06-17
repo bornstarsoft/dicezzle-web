@@ -965,6 +965,7 @@ export class GameScene extends Phaser.Scene {
       highestElement.style.setProperty('--die-chip-border', style.stroke);
       highestElement.style.setProperty('--die-chip-ink', style.pip);
       highestElement.classList.add('die-chip');
+      highestElement.classList.toggle('die-chip--star', this.highestDie === 'star');
     }
   }
 

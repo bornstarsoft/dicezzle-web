@@ -70,6 +70,18 @@
   text-shadow: 0 1px 1px rgb(0 0 0 / 22%);
 }
 
+.game-hud .die-chip--star {
+  border-width: 3px;
+  box-shadow:
+    0 0 0 2px rgb(255 235 148 / 44%),
+    inset 0 -5px 0 rgb(88 48 4 / 24%),
+    inset 0 1px 0 rgb(255 255 255 / 74%),
+    0 4px 12px rgb(118 73 5 / 22%);
+  text-shadow:
+    0 1px 1px rgb(82 45 5 / 38%),
+    0 0 7px rgb(255 239 172 / 82%);
+}
+
 .dicezzle-game-canvas {
   width: 100%;
   height: clamp(430px, 55svh, 560px);

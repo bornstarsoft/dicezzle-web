@@ -41,4 +41,10 @@ describe('DiceView geometry', () => {
     expect(star.centerY - star.outerRadius).toBeGreaterThanOrEqual(star.safe.top);
     expect(star.centerY + star.outerRadius).toBeLessThanOrEqual(star.safe.bottom);
   });
+
+  test('makes the star icon more prominent than numeric pips', () => {
+    const star = DiceView.getStarLayout(64);
+
+    expect(star.outerRadius).toBeGreaterThanOrEqual(64 * 0.25);
+  });
 });
