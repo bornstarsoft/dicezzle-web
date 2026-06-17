@@ -13,7 +13,7 @@ import { DiceView } from '../ui/DiceView.js';
 import { DiceStyle } from '../ui/DiceStyle.js';
 import { calculateGameLayout } from '../ui/GameLayout.js';
 import { buildMergeGatherPlan } from '../ui/MergePath.js';
-import { getStackLayerPoint, STACK_LAYER_SCALE } from '../ui/MergeStack.js';
+import { getMergeStackFeedback, getStackLayerPoint, STACK_LAYER_SCALE, takeNextStackArrival } from '../ui/MergeStack.js';
 import { applyMergeVisualEvent, createHiddenCellSet, hideMergeSourceCell } from '../ui/MergeVisualState.js';
 import { ResultPanel } from '../ui/ResultPanel.js';
 import { ToastView } from '../ui/ToastView.js';
@@ -396,6 +396,7 @@ export class GameScene extends Phaser.Scene {
       dieSize: targetCenter.dieSize ?? targetCenter.size * 0.96,
       cellSize: targetCenter.size,
       isSpecial: event.createdValue === 'star',
+      feedback: getMergeStackFeedback(event),
       stackBase: {
         row: event.target.row,
         col: event.target.col,
@@ -441,7 +442,7 @@ export class GameScene extends Phaser.Scene {
     return blockers;
   }
 
-  playGatherPlan({ plan, value, dieSize, cellSize, isSpecial = false, stackBase, onStackBaseStart, onStepStart, onComplete }) {
+  playGatherPlan({ plan, value, dieSize, cellSize, isSpecial = false, feedback = null, stackBase, onStackBaseStart, onStepStart, onComplete }) {
     if (!plan.steps.length || !stackBase) {
       onComplete?.();
       return;
@@ -461,6 +462,34 @@ export class GameScene extends Phaser.Scene {
       layerIndex: 0
     }];
     let completedSteps = 0;
+    let landingActive = false;
+    let nextLayerIndex = 1;
+    const landingQueue = [];
+    const processLandingQueue = () => {
+      if (landingActive || !landingQueue.length) {
+        return;
+      }
+
+      const nextArrival = takeNextStackArrival(landingQueue);
+      if (!nextArrival) {
+        return;
+      }
+      const { overlay, step } = nextArrival;
+      const layerIndex = nextLayerIndex;
+      nextLayerIndex += 1;
+      landingActive = true;
+      this.landStackOverlay(overlay, step, layerIndex, plan.steps.length + 1, cellSize, () => {
+        stackOverlays.push({ overlay, layerIndex });
+        completedSteps += 1;
+        landingActive = false;
+        if (completedSteps === plan.steps.length) {
+          this.playMergeSizeFeedback(plan.target, feedback, cellSize);
+          this.playStackBounce(stackOverlays, value, cellSize, isSpecial, onComplete);
+          return;
+        }
+        this.time.delayedCall(34, processLandingQueue);
+      });
+    };
     const stepDelay = 82;
     plan.steps.forEach((step, index) => {
       this.time.delayedCall(index * stepDelay, () => {
@@ -479,13 +508,8 @@ export class GameScene extends Phaser.Scene {
           keepAlive: true,
           pathEndScale: 1,
           onComplete: () => {
-            this.landStackOverlay(overlay, step, plan.steps.length + 1, cellSize, () => {
-              stackOverlays.push({ overlay, layerIndex: step.stage + 1 });
-              completedSteps += 1;
-              if (completedSteps === plan.steps.length) {
-                this.playStackBounce(stackOverlays, value, cellSize, isSpecial, onComplete);
-              }
-            });
+            landingQueue.push({ overlay, step });
+            processLandingQueue();
           }
         });
       });
@@ -508,9 +532,8 @@ export class GameScene extends Phaser.Scene {
     return getStackLayerPoint(point, layerIndex, total, cellSize);
   }
 
-  landStackOverlay(overlay, step, totalSteps, cellSize, onComplete) {
+  landStackOverlay(overlay, step, layerIndex, totalSteps, cellSize, onComplete) {
     const target = step.stackPath?.[step.stackPath.length - 1] ?? step.path[step.path.length - 1];
-    const layerIndex = step.stage + 1;
     const stackPoint = this.getStackPoint(target, layerIndex, totalSteps, cellSize);
     overlay.setDepth(72 + layerIndex);
     this.tweens.add({
@@ -523,6 +546,45 @@ export class GameScene extends Phaser.Scene {
       duration: 64,
       ease: 'Back.easeOut',
       onComplete
+    });
+  }
+
+  playMergeSizeFeedback(target, feedback, cellSize) {
+    if (!feedback || !target) {
+      return;
+    }
+
+    const isHuge = feedback.level === 'huge';
+    const container = this.add.container(target.x, target.y - cellSize * (isHuge ? 1.35 : 1.18)).setDepth(96);
+    const title = this.add.text(0, -cellSize * 0.16, feedback.title, {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: `${Math.max(13, Math.round(cellSize * (isHuge ? 0.25 : 0.22)))}px`,
+      fontStyle: '700',
+      color: isHuge ? '#f4bf45' : '#f8faf5',
+      stroke: '#28372f',
+      strokeThickness: 4
+    }).setOrigin(0.5);
+    const score = this.add.text(0, cellSize * 0.1, `+${ScoreModel.formatScore(feedback.score)}`, {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: `${Math.max(12, Math.round(cellSize * 0.2))}px`,
+      fontStyle: '700',
+      color: '#ffffff',
+      stroke: '#31433a',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+
+    container.add([title, score]);
+    this.mergeAnimationObjects.push(container);
+    container.setScale(isHuge ? 0.72 : 0.82);
+    this.tweens.add({
+      targets: container,
+      y: container.y - cellSize * 0.18,
+      scaleX: isHuge ? 1.08 : 1,
+      scaleY: isHuge ? 1.08 : 1,
+      alpha: 0,
+      duration: isHuge ? 620 : 520,
+      ease: 'Cubic.easeOut',
+      onComplete: () => container.destroy()
     });
   }
 
@@ -700,6 +762,7 @@ export class GameScene extends Phaser.Scene {
       dieSize: targetCenter.dieSize ?? targetCenter.size * 0.96,
       cellSize: targetCenter.size,
       isSpecial: true,
+      feedback: getMergeStackFeedback(event),
       stackBase: {
         row: event.target.row,
         col: event.target.col,

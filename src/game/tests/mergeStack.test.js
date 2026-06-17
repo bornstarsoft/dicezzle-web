@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { getStackLayerPoint, STACK_LAYER_SCALE } from '../ui/MergeStack.js';
+import { getMergeStackFeedback, getStackLayerPoint, STACK_LAYER_SCALE, takeNextStackArrival } from '../ui/MergeStack.js';
 
 describe('MergeStack', () => {
   test('keeps stack dice at full board-die scale', () => {
@@ -19,5 +19,30 @@ describe('MergeStack', () => {
     expect(points[3].y).toBeLessThan(points[2].y);
     expect(points[0].y - points[1].y).toBeGreaterThanOrEqual(12);
     expect(points[0].y - points[1].y).toBeLessThanOrEqual(18);
+  });
+
+  test('adds stronger feedback only for 4+ merge groups', () => {
+    expect(getMergeStackFeedback({ groupSize: 3, score: 30 })).toBeNull();
+    expect(getMergeStackFeedback({ groupSize: 4, score: 60 })).toMatchObject({
+      level: 'big',
+      title: '4 Dice Merge!',
+      score: 60
+    });
+    expect(getMergeStackFeedback({ groupSize: 5, score: 120 })).toMatchObject({
+      level: 'huge',
+      title: '5 Dice Merge!',
+      score: 120
+    });
+  });
+
+  test('takes queued stack arrivals in actual arrival order', () => {
+    const queue = [
+      { id: 'arrived-first', step: { stage: 2 } },
+      { id: 'arrived-second', step: { stage: 0 } }
+    ];
+
+    expect(takeNextStackArrival(queue)?.id).toBe('arrived-first');
+    expect(takeNextStackArrival(queue)?.id).toBe('arrived-second');
+    expect(takeNextStackArrival(queue)).toBeNull();
   });
 });
