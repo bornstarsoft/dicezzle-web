@@ -13,7 +13,7 @@ import { DiceView } from '../ui/DiceView.js';
 import { DiceStyle } from '../ui/DiceStyle.js';
 import { calculateGameLayout } from '../ui/GameLayout.js';
 import { buildMergeGatherPlan } from '../ui/MergePath.js';
-import { applyMergeVisualEvent } from '../ui/MergeVisualState.js';
+import { applyMergeVisualEvent, createHiddenCellSet, hideMergeSourceCell } from '../ui/MergeVisualState.js';
 import { ResultPanel } from '../ui/ResultPanel.js';
 import { ToastView } from '../ui/ToastView.js';
 import { TrayView } from '../ui/TrayView.js';
@@ -301,6 +301,7 @@ export class GameScene extends Phaser.Scene {
   renderGame(options = {}) {
     this.updateStats();
     const boardToRender = options.boardOverride ?? this.board;
+    const selectedDie = this.inputLocked || this.selectedTrayIndex === null ? null : this.tray[this.selectedTrayIndex];
     this.gameLayout = calculateGameLayout({
       width: this.scale.width,
       height: this.scale.height,
@@ -309,8 +310,9 @@ export class GameScene extends Phaser.Scene {
     });
     this.boardView.draw(boardToRender, {
       layout: this.gameLayout,
-      selectedDie: this.selectedTrayIndex === null ? null : this.tray[this.selectedTrayIndex],
+      selectedDie,
       previewCell: this.previewCell,
+      hiddenCells: options.hiddenCells,
       onCellTap: (row, col) => this.handleCellTap(row, col)
     });
     this.trayView.draw(this.tray, {
@@ -339,8 +341,14 @@ export class GameScene extends Phaser.Scene {
     }
 
     const event = events[index];
+    const hiddenCells = createHiddenCellSet();
+    const renderVisualBoard = () => {
+      if (visualBoard) {
+        this.renderGame({ boardOverride: visualBoard, hiddenCells });
+      }
+    };
     if (visualBoard) {
-      this.renderGame({ boardOverride: visualBoard });
+      renderVisualBoard();
     }
 
     const finishEvent = () => {
@@ -351,10 +359,18 @@ export class GameScene extends Phaser.Scene {
       this.time.delayedCall(120, () => this.playMergeAnimationAtIndex(events, index + 1, visualBoard, onComplete));
     };
 
+    const hideSourceCell = (step) => {
+      if (!visualBoard) {
+        return;
+      }
+      hideMergeSourceCell(hiddenCells, step.from);
+      renderVisualBoard();
+    };
+
     if (event.type === 'starClear') {
-      this.playStarClearAnimation(event, { board: visualBoard, onComplete: finishEvent });
+      this.playStarClearAnimation(event, { board: visualBoard, onSourceStart: hideSourceCell, onComplete: finishEvent });
     } else {
-      this.playMergeAnimation(event, { board: visualBoard, onComplete: finishEvent });
+      this.playMergeAnimation(event, { board: visualBoard, onSourceStart: hideSourceCell, onComplete: finishEvent });
     }
   }
 
@@ -371,6 +387,7 @@ export class GameScene extends Phaser.Scene {
       value: event.value,
       dieSize: targetCenter.dieSize ?? targetCenter.size * 0.96,
       cellSize: targetCenter.size,
+      onStepStart: options.onSourceStart,
       onComplete: () => {
         this.playTargetPop(targetCenter, event.value, event.createdValue === 'star', options.onComplete);
       }
@@ -410,7 +427,7 @@ export class GameScene extends Phaser.Scene {
     return blockers;
   }
 
-  playGatherPlan({ plan, value, dieSize, cellSize, onComplete }) {
+  playGatherPlan({ plan, value, dieSize, cellSize, onStepStart, onComplete }) {
     if (!plan.steps.length) {
       onComplete?.();
       return;
@@ -421,6 +438,7 @@ export class GameScene extends Phaser.Scene {
       this.time.delayedCall(index * stepDelay, () => {
         const start = step.path[0];
         const end = step.path[step.path.length - 1];
+        onStepStart?.(step);
         this.drawMergeTrail(step.path, value, cellSize, step.final ? 0.36 : 0.24);
         const overlay = DiceView.draw(this, start.x, start.y, dieSize, value, {
           alpha: 0.92,
@@ -560,6 +578,7 @@ export class GameScene extends Phaser.Scene {
       value: 'star',
       dieSize: targetCenter.dieSize ?? targetCenter.size * 0.96,
       cellSize: targetCenter.size,
+      onStepStart: options.onSourceStart,
       onComplete: () => {
         const burst = this.add.circle(targetCenter.x, targetCenter.y, targetCenter.size * 0.45, 0xf4bf45, 0.32).setDepth(69);
         burst.setStrokeStyle(Math.max(3, targetCenter.size * 0.06), 0xd09416, 0.58);

@@ -73,4 +73,23 @@ describe('getOrthogonalMergePath', () => {
     });
     plan.steps.forEach((step) => expectOrthogonal(step.path));
   });
+
+  test('orders staged gather steps from farthest source to nearest source', () => {
+    const target = { row: 2, col: 2, x: 140, y: 140 };
+    const far = { row: 0, col: 0, x: 20, y: 20 };
+    const middle = { row: 1, col: 1, x: 80, y: 80 };
+    const near = { row: 1, col: 2, x: 140, y: 80 };
+
+    const plan = buildMergeGatherPlan({
+      group: [target, near, far, middle],
+      target
+    });
+
+    expect(plan.steps.map((step) => `${step.from.row},${step.from.col}`)).toEqual([
+      '0,0',
+      '1,1',
+      '1,2'
+    ]);
+    plan.steps.forEach((step) => expectOrthogonal(step.path));
+  });
 });

@@ -1,3 +1,23 @@
+function cellKey(row, col) {
+  return `${row},${col}`;
+}
+
+export function createHiddenCellSet(cells = []) {
+  return new Set(cells.map((cell) => cellKey(cell.row, cell.col)));
+}
+
+export function hideMergeSourceCell(hiddenCells, cell) {
+  if (!hiddenCells || !cell) {
+    return hiddenCells;
+  }
+  hiddenCells.add(cellKey(cell.row, cell.col));
+  return hiddenCells;
+}
+
+export function isCellHidden(hiddenCells, row, col) {
+  return Boolean(hiddenCells?.has(cellKey(row, col)));
+}
+
 export function applyMergeVisualEvent(board, event) {
   if (!board || !event) {
     return board;

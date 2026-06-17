@@ -1,5 +1,6 @@
 import { DiceView } from './DiceView.js';
 import { calculateGameLayout } from './GameLayout.js';
+import { isCellHidden } from './MergeVisualState.js';
 
 export class BoardView {
   constructor(scene) {
@@ -29,14 +30,16 @@ export class BoardView {
         const centerX = x + cellSize / 2;
         const centerY = y + cellSize / 2;
         const cell = board.getCell(row, col);
-        const isValid = !cell && options.selectedDie;
+        const hidden = isCellHidden(options.hiddenCells, row, col);
+        const visibleCell = hidden ? null : cell;
+        const isValid = !visibleCell && options.selectedDie;
         const isPreview = options.previewCell?.row === row && options.previewCell?.col === col;
         const previewValid = Boolean(options.previewCell?.valid);
 
         this.objects.push(this.drawCellSlot(x, y, cellSize, { isValid, isPreview, previewValid }));
 
-        if (cell) {
-          this.objects.push(DiceView.draw(this.scene, centerX, centerY, dieSize, cell.value));
+        if (visibleCell) {
+          this.objects.push(DiceView.draw(this.scene, centerX, centerY, dieSize, visibleCell.value));
         }
 
         const hitArea = this.scene.add.zone(centerX, centerY, cellSize, cellSize);

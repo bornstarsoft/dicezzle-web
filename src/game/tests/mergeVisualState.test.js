@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { BoardModel } from '../core/BoardModel.js';
-import { applyMergeVisualEvent } from '../ui/MergeVisualState.js';
+import { applyMergeVisualEvent, createHiddenCellSet, hideMergeSourceCell, isCellHidden } from '../ui/MergeVisualState.js';
 
 describe('MergeVisualState', () => {
   test('keeps old dice until the merge event is visually committed', () => {
@@ -38,5 +38,16 @@ describe('MergeVisualState', () => {
     expect(board.getCellValue(1, 2)).toBeNull();
     expect(board.getCellValue(2, 1)).toBeNull();
     expect(board.getCellValue(2, 2)).toBeNull();
+  });
+
+  test('can hide a moving source cell before the merge event is committed', () => {
+    const hiddenCells = createHiddenCellSet();
+
+    expect(isCellHidden(hiddenCells, 0, 0)).toBe(false);
+
+    hideMergeSourceCell(hiddenCells, { row: 0, col: 0 });
+
+    expect(isCellHidden(hiddenCells, 0, 0)).toBe(true);
+    expect(isCellHidden(hiddenCells, 0, 1)).toBe(false);
   });
 });
