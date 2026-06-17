@@ -13,6 +13,7 @@ import { DiceView } from '../ui/DiceView.js';
 import { DiceStyle } from '../ui/DiceStyle.js';
 import { calculateGameLayout } from '../ui/GameLayout.js';
 import { buildMergeGatherPlan } from '../ui/MergePath.js';
+import { applyMergeVisualEvent } from '../ui/MergeVisualState.js';
 import { ResultPanel } from '../ui/ResultPanel.js';
 import { ToastView } from '../ui/ToastView.js';
 import { TrayView } from '../ui/TrayView.js';
@@ -78,6 +79,7 @@ export class GameScene extends Phaser.Scene {
     this.previewCell = null;
     this.mergeAnimationObjects = [];
     this.isGameOver = false;
+    this.inputLocked = false;
     this.tray = this.trayGenerator.nextTray({ turn: this.turn });
     this.resultPanel.hide();
     this.showTutorialIfNeeded();
@@ -139,7 +141,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   handleTrayTap(index) {
-    if (this.isGameOver || !this.tray[index]) {
+    if (this.inputLocked || this.isGameOver || !this.tray[index]) {
       return;
     }
     this.selectedTrayIndex = index;
@@ -147,7 +149,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   handleCellTap(row, col) {
-    if (this.isGameOver || this.selectedTrayIndex === null || !this.tray[this.selectedTrayIndex]) {
+    if (this.inputLocked || this.isGameOver) {
+      return;
+    }
+    if (this.selectedTrayIndex === null || !this.tray[this.selectedTrayIndex]) {
       this.toast.show('Tap a die first.');
       return;
     }
@@ -160,7 +165,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   placeTrayDie(slotIndex, row, col) {
-    if (this.isGameOver || !this.tray[slotIndex]) {
+    if (this.inputLocked || this.isGameOver || !this.tray[slotIndex]) {
       return false;
     }
     if (!this.board.isEmpty(row, col)) {
@@ -169,6 +174,7 @@ export class GameScene extends Phaser.Scene {
 
     const die = this.tray[slotIndex];
     this.board.placeDie(row, col, die.value);
+    const visualBoard = this.board.clone();
     this.score += this.scoreModel.placeScore();
     this.highestDie = this.maxDie(this.highestDie, die.value);
     this.tray = TraySlots.consume(this.tray, slotIndex);
@@ -178,23 +184,41 @@ export class GameScene extends Phaser.Scene {
     const mergeResult = this.resolver.resolveAll(this.board, { row, col });
     this.applyMergeResult(mergeResult);
 
+    let shouldEndAfterTurn = false;
     if (this.shouldGameEnd()) {
-      this.endGame();
-      return true;
+      shouldEndAfterTurn = true;
     }
 
-    if (TraySlots.shouldRefill(this.tray)) {
+    if (!shouldEndAfterTurn && TraySlots.shouldRefill(this.tray)) {
       this.turn += 1;
       this.tray = this.trayGenerator.nextTray({ turn: this.turn });
       this.selectedTrayIndex = TraySlots.nextActiveIndex(this.tray, 0);
       if (this.shouldGameEnd()) {
-        this.endGame();
-        return true;
+        shouldEndAfterTurn = true;
       }
     }
 
+    if (mergeResult.events.length) {
+      this.inputLocked = true;
+      this.cancelDrag({ render: false });
+      this.renderGame({ boardOverride: visualBoard });
+      this.playMergeAnimations(mergeResult.events, visualBoard, () => {
+        this.inputLocked = false;
+        if (shouldEndAfterTurn) {
+          this.endGame();
+        } else {
+          this.renderGame();
+        }
+      });
+      return true;
+    }
+
+    if (shouldEndAfterTurn) {
+      this.endGame();
+      return true;
+    }
+
     this.renderGame();
-    this.playMergeAnimations(mergeResult.events);
     return true;
   }
 
@@ -274,15 +298,16 @@ export class GameScene extends Phaser.Scene {
     this.toast.show('Result copied!');
   }
 
-  renderGame() {
+  renderGame(options = {}) {
     this.updateStats();
+    const boardToRender = options.boardOverride ?? this.board;
     this.gameLayout = calculateGameLayout({
       width: this.scale.width,
       height: this.scale.height,
-      boardSize: this.board.size,
+      boardSize: boardToRender.size,
       traySize: Math.max(3, this.tray.length)
     });
-    this.boardView.draw(this.board, {
+    this.boardView.draw(boardToRender, {
       layout: this.gameLayout,
       selectedDie: this.selectedTrayIndex === null ? null : this.tray[this.selectedTrayIndex],
       previewCell: this.previewCell,
@@ -297,43 +322,62 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  playMergeAnimations(events) {
+  playMergeAnimations(events, visualBoard = null, onComplete = null) {
     if (!events?.length || !this.boardView.layout) {
+      onComplete?.();
       return;
     }
 
     this.clearMergeAnimationObjects();
-    events.forEach((event, index) => {
-      const delay = index * 430;
-      this.time.delayedCall(delay, () => {
-        if (event.type === 'starClear') {
-          this.playStarClearAnimation(event);
-        } else {
-          this.playMergeAnimation(event);
-        }
-      });
-    });
+    this.playMergeAnimationAtIndex(events, 0, visualBoard, onComplete);
   }
 
-  playMergeAnimation(event) {
-    const targetCenter = this.boardView.getCellCenter(event.target.row, event.target.col);
-    if (!targetCenter) {
+  playMergeAnimationAtIndex(events, index, visualBoard, onComplete) {
+    if (index >= events.length) {
+      onComplete?.();
       return;
     }
 
-    const plan = this.buildGatherPlan(event, targetCenter);
+    const event = events[index];
+    if (visualBoard) {
+      this.renderGame({ boardOverride: visualBoard });
+    }
+
+    const finishEvent = () => {
+      if (visualBoard) {
+        applyMergeVisualEvent(visualBoard, event);
+        this.renderGame({ boardOverride: visualBoard });
+      }
+      this.time.delayedCall(120, () => this.playMergeAnimationAtIndex(events, index + 1, visualBoard, onComplete));
+    };
+
+    if (event.type === 'starClear') {
+      this.playStarClearAnimation(event, { board: visualBoard, onComplete: finishEvent });
+    } else {
+      this.playMergeAnimation(event, { board: visualBoard, onComplete: finishEvent });
+    }
+  }
+
+  playMergeAnimation(event, options = {}) {
+    const targetCenter = this.boardView.getCellCenter(event.target.row, event.target.col);
+    if (!targetCenter) {
+      options.onComplete?.();
+      return;
+    }
+
+    const plan = this.buildGatherPlan(event, targetCenter, options.board);
     this.playGatherPlan({
       plan,
       value: event.value,
       dieSize: targetCenter.dieSize ?? targetCenter.size * 0.96,
       cellSize: targetCenter.size,
       onComplete: () => {
-        this.playTargetPop(targetCenter, event.createdValue, event.createdValue === 'star');
+        this.playTargetPop(targetCenter, event.value, event.createdValue === 'star', options.onComplete);
       }
     });
   }
 
-  buildGatherPlan(event, targetCenter) {
+  buildGatherPlan(event, targetCenter, board = this.board) {
     const group = (event.group ?? [])
       .map((cell) => {
         const center = this.boardView.getCellCenter(cell.row, cell.col);
@@ -349,16 +393,16 @@ export class GameScene extends Phaser.Scene {
         x: targetCenter.x,
         y: targetCenter.y
       },
-      blockedCells: this.getVisualBlockers(event)
+      blockedCells: this.getVisualBlockers(event, board)
     });
   }
 
-  getVisualBlockers(event) {
+  getVisualBlockers(event, board = this.board) {
     const mergeCells = new Set((event.group ?? []).map((cell) => `${cell.row},${cell.col}`));
     const blockers = [];
-    for (let row = 0; row < this.board.size; row += 1) {
-      for (let col = 0; col < this.board.size; col += 1) {
-        if (this.board.getCell(row, col) && !mergeCells.has(`${row},${col}`)) {
+    for (let row = 0; row < board.size; row += 1) {
+      for (let col = 0; col < board.size; col += 1) {
+        if (board.getCell(row, col) && !mergeCells.has(`${row},${col}`)) {
           blockers.push({ row, col });
         }
       }
@@ -465,8 +509,9 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  playTargetPop(center, value, isSpecial = false) {
+  playTargetPop(center, value, isSpecial = false, onComplete = null) {
     if (!center) {
+      onComplete?.();
       return;
     }
 
@@ -495,17 +540,21 @@ export class GameScene extends Phaser.Scene {
       duration: 105,
       ease: 'Back.easeOut',
       yoyo: true,
-      onComplete: () => die.destroy()
+      onComplete: () => {
+        die.destroy();
+        onComplete?.();
+      }
     });
   }
 
-  playStarClearAnimation(event) {
+  playStarClearAnimation(event, options = {}) {
     const targetCenter = this.boardView.getCellCenter(event.target.row, event.target.col);
     if (!targetCenter) {
+      options.onComplete?.();
       return;
     }
 
-    const plan = this.buildGatherPlan(event, targetCenter);
+    const plan = this.buildGatherPlan(event, targetCenter, options.board);
     this.playGatherPlan({
       plan,
       value: 'star',
@@ -522,7 +571,10 @@ export class GameScene extends Phaser.Scene {
           alpha: 0,
           duration: 360,
           ease: 'Sine.easeOut',
-          onComplete: () => burst.destroy()
+          onComplete: () => {
+            burst.destroy();
+            options.onComplete?.();
+          }
         });
       }
     });
@@ -539,7 +591,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   startDrag(slotIndex, pointer) {
-    if (this.isGameOver || !this.tray[slotIndex]) {
+    if (this.inputLocked || this.isGameOver || !this.tray[slotIndex]) {
       return;
     }
 
@@ -566,7 +618,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   handlePointerMove(pointer) {
-    if (!this.dragState || this.dragState.returning) {
+    if (this.inputLocked || !this.dragState || this.dragState.returning) {
       return;
     }
 
@@ -585,7 +637,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   handlePointerUp(pointer) {
-    if (!this.dragState || this.dragState.returning) {
+    if (this.inputLocked || !this.dragState || this.dragState.returning) {
       return;
     }
 

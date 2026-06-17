@@ -25,6 +25,14 @@ describe('DiceView geometry', () => {
     expect(Math.abs(cols[0])).toBeCloseTo(Math.abs(cols[1]), 5);
   });
 
+  test('uses a nearly square top-face safe area', () => {
+    const { safe } = DiceView.getFaceGeometry(64);
+    const width = safe.right - safe.left;
+    const height = safe.bottom - safe.top;
+
+    expect(Math.abs(width - height)).toBeLessThanOrEqual(1);
+  });
+
   test('centers the star inside the same face safe area', () => {
     const star = DiceView.getStarLayout(64);
 
