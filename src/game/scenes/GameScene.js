@@ -12,6 +12,7 @@ import { BoardView } from '../ui/BoardView.js';
 import { DiceView } from '../ui/DiceView.js';
 import { DiceStyle } from '../ui/DiceStyle.js';
 import { calculateGameLayout } from '../ui/GameLayout.js';
+import { getStarsHudState } from '../ui/HudStats.js';
 import { buildMergeGatherPlan } from '../ui/MergePath.js';
 import { getMergeStackFeedback, getStackLayerPoint, STACK_LAYER_SCALE, takeNextStackArrival } from '../ui/MergeStack.js';
 import { applyMergeVisualEvent, createHiddenCellSet, hideMergeSourceCell } from '../ui/MergeVisualState.js';
@@ -957,15 +958,28 @@ export class GameScene extends Phaser.Scene {
     setText('[data-score]', ScoreModel.formatScore(this.score));
     setText('[data-best-score]', ScoreModel.formatScore(Math.max(this.bestScore, this.score)));
     setText('[data-turns]', String(this.turn));
-    const highestElement = document.querySelector('[data-highest-die]');
-    if (highestElement) {
-      const style = DiceStyle.forValue(this.highestDie);
-      highestElement.textContent = DiceModel.label(this.highestDie);
-      highestElement.style.setProperty('--die-chip-fill', style.fill);
-      highestElement.style.setProperty('--die-chip-border', style.stroke);
-      highestElement.style.setProperty('--die-chip-ink', style.pip);
-      highestElement.classList.add('die-chip');
-      highestElement.classList.toggle('die-chip--star', this.highestDie === 'star');
+    const starsHud = getStarsHudState({
+      starsCreated: this.starsCreated,
+      starClears: this.starClears
+    });
+    setText('[data-stars-label]', starsHud.label);
+    setText('[data-stars-count]', starsHud.countText);
+    setText('[data-star-clears]', starsHud.clearsText);
+
+    const starsElement = document.querySelector('[data-stars-hud]');
+    if (starsElement) {
+      starsElement.setAttribute('aria-label', `Stars created: ${starsHud.starsCreated}; Star clears: ${starsHud.starClears}`);
+    }
+
+    const starsIcon = document.querySelector('[data-stars-icon]');
+    if (starsIcon) {
+      const { style } = starsHud;
+      starsIcon.style.setProperty('--star-hud-fill', style.fill);
+      starsIcon.style.setProperty('--star-hud-border', style.stroke);
+      starsIcon.style.setProperty('--star-hud-rim', style.rim);
+      starsIcon.style.setProperty('--star-hud-ink', style.pip);
+      starsIcon.style.setProperty('--star-hud-shadow', style.pipShadow);
+      starsIcon.style.setProperty('--star-hud-glow', style.starGlow ?? style.glow);
     }
   }
 

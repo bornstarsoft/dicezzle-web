@@ -12,6 +12,14 @@ function colorDistance(leftHex, rightHex) {
   return Math.sqrt(left.reduce((sum, channel, index) => sum + (channel - right[index]) ** 2, 0));
 }
 
+function rgb(hex) {
+  return {
+    red: Number.parseInt(hex.slice(1, 3), 16),
+    green: Number.parseInt(hex.slice(3, 5), 16),
+    blue: Number.parseInt(hex.slice(5, 7), 16)
+  };
+}
+
 describe('DiceStyle', () => {
   test('gives each die value a distinct readable color identity', () => {
     const values = [1, 2, 3, 4, 5, 6, 'star'];
@@ -31,14 +39,22 @@ describe('DiceStyle', () => {
     });
   });
 
-  test('keeps value 3 yellow while making star visibly special', () => {
+  test('keeps value 3 lime green while making star visibly special', () => {
+    const two = DiceStyle.forValue(2);
     const three = DiceStyle.forValue(3);
+    const four = DiceStyle.forValue(4);
     const star = DiceStyle.forValue('star');
+    const threeFill = rgb(three.fill);
 
+    expect(three.name).toMatch(/green|lime|leaf/i);
     expect(three.special).not.toBe(true);
+    expect(threeFill.green).toBeGreaterThan(threeFill.red + 35);
+    expect(threeFill.green).toBeGreaterThan(threeFill.blue + 45);
     expect(star.special).toBe(true);
     expect(star.starScale).toBeGreaterThan(1);
     expect(colorDistance(three.fill, star.fill)).toBeGreaterThanOrEqual(70);
+    expect(colorDistance(three.fill, two.fill)).toBeGreaterThanOrEqual(55);
+    expect(colorDistance(three.fill, four.fill)).toBeGreaterThanOrEqual(85);
     expect(colorDistance(three.stroke, star.stroke)).toBeGreaterThanOrEqual(55);
   });
 });

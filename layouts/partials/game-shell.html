@@ -4,7 +4,16 @@
       <div><span>Score</span><strong data-score>0</strong></div>
       <div><span>Best</span><strong data-best-score>0</strong></div>
       <div><span>Turn</span><strong data-turns>1</strong></div>
-      <div><span>Top</span><strong data-highest-die>⚀</strong></div>
+      <div class="game-hud__card--stars">
+        <span data-stars-label>Stars</span>
+        <strong class="stars-hud" data-stars-hud aria-label="Stars created: 0">
+          <span class="stars-hud__die" data-stars-icon aria-hidden="true">
+            <span class="stars-hud__star"></span>
+          </span>
+          <span class="stars-hud__count" data-stars-count>×0</span>
+        </strong>
+        <small data-star-clears>Clears 0</small>
+      </div>
     </div>
     <div id="dicezzle-game" class="dicezzle-game-canvas" role="application" aria-label="Dicezzle board and tray"></div>
     <div class="game-actions" aria-label="Game controls">

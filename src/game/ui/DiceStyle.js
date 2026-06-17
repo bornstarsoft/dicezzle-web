@@ -24,16 +24,16 @@ const VALUE_STYLES = {
     glow: '#7ee7de'
   },
   3: {
-    name: 'sunny yellow',
-    fill: '#f7c94a',
-    highlight: '#ffec9a',
-    side: '#bd861d',
-    stroke: '#8b6515',
-    rim: '#fff2b5',
-    pip: '#fff9ee',
-    pipShadow: '#6e5015',
-    shadow: '#765212',
-    glow: '#ffdb70'
+    name: 'fresh leaf green',
+    fill: '#8bd64e',
+    highlight: '#d8ff9b',
+    side: '#5aa52c',
+    stroke: '#3f7f20',
+    rim: '#e6ffc1',
+    pip: '#fffaf0',
+    pipShadow: '#2f641a',
+    shadow: '#2d5418',
+    glow: '#b9f275'
   },
   4: {
     name: 'soft orange',

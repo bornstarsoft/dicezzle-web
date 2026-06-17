@@ -36,14 +36,14 @@
   padding: 6px 8px;
 }
 
-.game-hud span {
+.game-hud > div > span {
   display: block;
   color: #66706a;
   font-size: 0.75rem;
   font-weight: 700;
 }
 
-.game-hud strong {
+.game-hud > div > strong {
   display: block;
   margin-top: 2px;
   font-size: clamp(0.98rem, 3.4vw, 1.25rem);
@@ -80,6 +80,78 @@
   text-shadow:
     0 1px 1px rgb(82 45 5 / 38%),
     0 0 7px rgb(255 239 172 / 82%);
+}
+
+.game-hud__card--stars small {
+  display: block;
+  margin-top: 2px;
+  color: #778079;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.game-hud > div > .stars-hud {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
+}
+
+.stars-hud__die {
+  position: relative;
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  border: 3px solid var(--star-hud-border, #563003);
+  border-radius: 9px;
+  background:
+    radial-gradient(circle at 30% 22%, rgb(255 255 255 / 50%) 0 20%, transparent 23%),
+    linear-gradient(180deg, rgb(255 255 255 / 30%) 0%, transparent 43%),
+    var(--star-hud-fill, #e49a12);
+  box-shadow:
+    0 0 0 2px rgb(255 235 148 / 36%),
+    inset 0 -5px 0 rgb(88 48 4 / 24%),
+    inset 0 1px 0 rgb(255 255 255 / 72%),
+    0 3px 8px rgb(118 73 5 / 18%);
+}
+
+.stars-hud__die::before {
+  position: absolute;
+  inset: 5px;
+  border-radius: 6px;
+  border: 1px solid var(--star-hud-rim, #fff0a0);
+  content: "";
+  opacity: 0.72;
+}
+
+.stars-hud__die::after {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--star-hud-glow, #fff0a8);
+  content: "";
+  filter: blur(4px);
+  opacity: 0.34;
+}
+
+.stars-hud__star {
+  position: relative;
+  z-index: 1;
+  width: 17px;
+  height: 17px;
+  background: var(--star-hud-ink, #fff8cc);
+  clip-path: polygon(50% 0%, 61% 34%, 98% 35%, 68% 56%, 79% 91%, 50% 70%, 21% 91%, 32% 56%, 2% 35%, 39% 34%);
+  filter: drop-shadow(0 1px 0 var(--star-hud-shadow, #8f5204));
+}
+
+.stars-hud__count {
+  color: #26342d;
+  font-weight: 900;
+  letter-spacing: 0;
 }
 
 .dicezzle-game-canvas {
