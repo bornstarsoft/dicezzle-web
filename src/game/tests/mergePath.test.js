@@ -67,11 +67,17 @@ describe('getOrthogonalMergePath', () => {
       to: { row: 0, col: 1 },
       final: false
     });
+    expect(plan.steps[0].stackPath).toContainEqual({ x: 100, y: 40 });
+    expect(plan.steps[0].stackPath.at(-1)).toEqual({ x: 100, y: 160 });
     expect(plan.steps.at(-1)).toMatchObject({
       to: { row: 2, col: 1 },
       final: true
     });
-    plan.steps.forEach((step) => expectOrthogonal(step.path));
+    plan.steps.forEach((step) => {
+      expectOrthogonal(step.path);
+      expectOrthogonal(step.stackPath);
+      expect(step.stackPath.at(-1)).toEqual({ x: target.x, y: target.y });
+    });
   });
 
   test('orders staged gather steps from farthest source to nearest source', () => {
@@ -90,6 +96,10 @@ describe('getOrthogonalMergePath', () => {
       '1,1',
       '1,2'
     ]);
-    plan.steps.forEach((step) => expectOrthogonal(step.path));
+    plan.steps.forEach((step) => {
+      expectOrthogonal(step.path);
+      expectOrthogonal(step.stackPath);
+      expect(step.stackPath.at(-1)).toEqual({ x: target.x, y: target.y });
+    });
   });
 });

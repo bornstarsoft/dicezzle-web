@@ -387,10 +387,9 @@ export class GameScene extends Phaser.Scene {
       value: event.value,
       dieSize: targetCenter.dieSize ?? targetCenter.size * 0.96,
       cellSize: targetCenter.size,
+      isSpecial: event.createdValue === 'star',
       onStepStart: options.onSourceStart,
-      onComplete: () => {
-        this.playTargetPop(targetCenter, event.value, event.createdValue === 'star', options.onComplete);
-      }
+      onComplete: options.onComplete
     });
   }
 
@@ -427,37 +426,119 @@ export class GameScene extends Phaser.Scene {
     return blockers;
   }
 
-  playGatherPlan({ plan, value, dieSize, cellSize, onStepStart, onComplete }) {
+  playGatherPlan({ plan, value, dieSize, cellSize, isSpecial = false, onStepStart, onComplete }) {
     if (!plan.steps.length) {
       onComplete?.();
       return;
     }
 
-    const stepDelay = 118;
+    const stackOverlays = [];
+    let completedSteps = 0;
+    const stepDelay = 82;
     plan.steps.forEach((step, index) => {
       this.time.delayedCall(index * stepDelay, () => {
-        const start = step.path[0];
-        const end = step.path[step.path.length - 1];
+        const path = step.stackPath ?? step.path;
+        const start = path[0];
         onStepStart?.(step);
-        this.drawMergeTrail(step.path, value, cellSize, step.final ? 0.36 : 0.24);
+        this.drawMergeTrail(path, value, cellSize, step.final ? 0.36 : 0.24);
         const overlay = DiceView.draw(this, start.x, start.y, dieSize, value, {
           alpha: 0.92,
           depth: 72,
           drag: true
         });
         this.mergeAnimationObjects.push(overlay);
-        this.animateAlongPath(overlay, step.path, cellSize, 1, {
-          finalScale: step.final ? 0.42 : 0.66,
+        overlay.setDepth(72 + step.stage * 0.2);
+        this.animateAlongPath(overlay, path, cellSize, 1, {
+          keepAlive: true,
+          pathEndScale: 0.78,
           onComplete: () => {
-            if (!step.final) {
-              this.playGatherPulse(end, value, cellSize);
-            }
+            this.landStackOverlay(overlay, step, plan.steps.length, cellSize, () => {
+              stackOverlays.push({ overlay, stage: step.stage });
+              completedSteps += 1;
+              if (completedSteps === plan.steps.length) {
+                this.playStackBounce(stackOverlays, value, cellSize, isSpecial, onComplete);
+              }
+            });
           }
         });
       });
     });
+  }
 
-    this.time.delayedCall(plan.steps.length * stepDelay + 360, () => onComplete?.());
+  getStackPoint(point, stage, total, cellSize) {
+    const stackOffset = Math.min(cellSize * 0.09, 7);
+    const centeredStage = stage - (total - 1) / 2;
+    return {
+      x: point.x + centeredStage * Math.min(cellSize * 0.018, 1.3),
+      y: point.y - stage * stackOffset
+    };
+  }
+
+  landStackOverlay(overlay, step, totalSteps, cellSize, onComplete) {
+    const target = step.stackPath?.[step.stackPath.length - 1] ?? step.path[step.path.length - 1];
+    const stackPoint = this.getStackPoint(target, step.stage, totalSteps, cellSize);
+    this.tweens.add({
+      targets: overlay,
+      x: stackPoint.x,
+      y: stackPoint.y,
+      scaleX: 0.78,
+      scaleY: 0.78,
+      alpha: 0.96,
+      duration: 72,
+      ease: 'Back.easeOut',
+      onComplete
+    });
+  }
+
+  playStackBounce(stackOverlays, value, cellSize, isSpecial, onComplete) {
+    const overlays = stackOverlays
+      .sort((left, right) => left.stage - right.stage)
+      .map((item) => item.overlay)
+      .filter((overlay) => overlay && !overlay.destroyed);
+
+    if (!overlays.length) {
+      onComplete?.();
+      return;
+    }
+
+    const lastOverlay = overlays[overlays.length - 1];
+    const style = DiceStyle.forValue(value);
+    const glow = this.add.circle(lastOverlay.x, lastOverlay.y + cellSize * 0.08, cellSize * (isSpecial ? 0.48 : 0.38), DiceStyle.hexToNumber(style.glow), isSpecial ? 0.32 : 0.2).setDepth(68);
+    this.mergeAnimationObjects.push(glow);
+
+    this.tweens.add({
+      targets: glow,
+      scaleX: isSpecial ? 1.7 : 1.35,
+      scaleY: isSpecial ? 1.7 : 1.35,
+      alpha: 0,
+      duration: isSpecial ? 250 : 190,
+      ease: 'Sine.easeOut',
+      onComplete: () => glow.destroy()
+    });
+
+    this.tweens.add({
+      targets: overlays,
+      scaleX: 0.9,
+      scaleY: 0.58,
+      y: '+=4',
+      duration: 70,
+      ease: 'Cubic.easeOut',
+      yoyo: true,
+      onComplete: () => {
+        this.tweens.add({
+          targets: overlays,
+          scaleX: 0.18,
+          scaleY: 0.18,
+          alpha: 0,
+          duration: 85,
+          ease: 'Cubic.easeIn',
+          onComplete: () => {
+            overlays.forEach((overlay) => overlay.destroy());
+            onComplete?.();
+          }
+        });
+      }
+    });
   }
 
   playGatherPulse(point, value, cellSize) {
@@ -499,6 +580,10 @@ export class GameScene extends Phaser.Scene {
 
   animateAlongPath(overlay, path, cellSize, segmentIndex = 1, options = {}) {
     if (segmentIndex >= path.length) {
+      if (options.keepAlive) {
+        options.onComplete?.();
+        return;
+      }
       this.tweens.add({
         targets: overlay,
         scaleX: options.finalScale ?? 0.38,
@@ -519,9 +604,9 @@ export class GameScene extends Phaser.Scene {
       targets: overlay,
       x: point.x,
       y: point.y,
-      scaleX: segmentIndex === path.length - 1 ? 0.62 : 0.9,
-      scaleY: segmentIndex === path.length - 1 ? 0.62 : 0.9,
-      duration: Math.max(86, Math.min(132, cellSize * 1.45)),
+      scaleX: segmentIndex === path.length - 1 ? options.pathEndScale ?? 0.62 : 0.9,
+      scaleY: segmentIndex === path.length - 1 ? options.pathEndScale ?? 0.62 : 0.9,
+      duration: Math.max(76, Math.min(112, cellSize * 1.28)),
       ease: segmentIndex === path.length - 1 ? 'Cubic.easeIn' : 'Sine.easeInOut',
       onComplete: () => this.animateAlongPath(overlay, path, cellSize, segmentIndex + 1, options)
     });
@@ -578,6 +663,7 @@ export class GameScene extends Phaser.Scene {
       value: 'star',
       dieSize: targetCenter.dieSize ?? targetCenter.size * 0.96,
       cellSize: targetCenter.size,
+      isSpecial: true,
       onStepStart: options.onSourceStart,
       onComplete: () => {
         const burst = this.add.circle(targetCenter.x, targetCenter.y, targetCenter.size * 0.45, 0xf4bf45, 0.32).setDepth(69);

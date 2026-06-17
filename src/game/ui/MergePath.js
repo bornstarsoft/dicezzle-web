@@ -22,6 +22,21 @@ function distance(left, right) {
   return Math.abs(left.row - right.row) + Math.abs(left.col - right.col);
 }
 
+function chooseCloserMergeCell(source, group, target) {
+  const sourceDistance = distance(source, target);
+  const candidates = group
+    .filter((candidate) => cellKey(candidate) !== cellKey(source))
+    .filter((candidate) => distance(candidate, target) < sourceDistance);
+
+  return candidates.sort((left, right) => {
+    const sourceDelta = distance(source, left) - distance(source, right);
+    if (sourceDelta !== 0) {
+      return sourceDelta;
+    }
+    return distance(left, target) - distance(right, target);
+  })[0] ?? target;
+}
+
 function chooseTurn(source, target, blockedCells = []) {
   const horizontalFirst = {
     point: { x: target.x, y: source.y },
@@ -55,6 +70,36 @@ export function getOrthogonalMergePath(source, target, options = {}) {
   return compactPath([start, turn, end]);
 }
 
+function buildStackPath(source, group, target, blockedCells) {
+  const targetKey = cellKey(target);
+  const points = [toPoint(source)];
+  const visited = new Set([cellKey(source)]);
+  let cursor = source;
+
+  for (let guard = 0; guard < group.length + 2; guard += 1) {
+    if (cellKey(cursor) === targetKey) {
+      break;
+    }
+
+    const next = chooseCloserMergeCell(cursor, group, target);
+    if (!next || visited.has(cellKey(next))) {
+      break;
+    }
+
+    const segment = getOrthogonalMergePath(cursor, next, { blockedCells });
+    points.push(...segment.slice(1));
+    visited.add(cellKey(next));
+    cursor = next;
+  }
+
+  if (cellKey(cursor) !== targetKey) {
+    const segment = getOrthogonalMergePath(cursor, target, { blockedCells });
+    points.push(...segment.slice(1));
+  }
+
+  return compactPath(points);
+}
+
 export function buildMergeGatherPlan({ group = [], target, blockedCells = [] } = {}) {
   if (!target || !group.length) {
     return { steps: [] };
@@ -68,25 +113,16 @@ export function buildMergeGatherPlan({ group = [], target, blockedCells = [] } =
     .sort((left, right) => distance(right, target) - distance(left, target));
 
   const steps = sources.map((source, index) => {
-    const sourceDistance = distance(source, target);
-    const candidates = group
-      .filter((candidate) => cellKey(candidate) !== cellKey(source))
-      .filter((candidate) => distance(candidate, target) < sourceDistance);
-    const to = candidates.sort((left, right) => {
-      const sourceDelta = distance(source, left) - distance(source, right);
-      if (sourceDelta !== 0) {
-        return sourceDelta;
-      }
-      return distance(left, target) - distance(right, target);
-    })[0] ?? target;
+    const to = chooseCloserMergeCell(source, group, target);
     return {
       from: source,
       to,
       stage: index,
       final: cellKey(to) === targetKey,
-      path: getOrthogonalMergePath(source, to, { blockedCells: visualBlockers })
+      path: getOrthogonalMergePath(source, to, { blockedCells: visualBlockers }),
+      stackPath: buildStackPath(source, group, target, visualBlockers)
     };
   });
 
-  return { steps };
+  return { target, steps };
 }
