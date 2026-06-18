@@ -35,12 +35,13 @@ describe('calculateGameLayout', () => {
   });
 
   test('keeps an iPhone-sized compact canvas playable with a smaller tray rack', () => {
-    const layout = calculateGameLayout({ width: 393, height: 404, boardSize: 5, traySize: 3 });
+    const layout = calculateGameLayout({ width: 393, height: 388, boardSize: 5, traySize: 3 });
 
     expect(layout.board.originY).toBeLessThanOrEqual(8);
-    expect(layout.board.cellSize).toBeGreaterThanOrEqual(56);
-    expect(layout.tray.slotSize).toBeLessThanOrEqual(74);
-    expect(layout.tray.top - layout.board.bottom).toBeGreaterThanOrEqual(18);
+    expect(layout.board.size).toBeLessThanOrEqual(290);
+    expect(layout.board.cellSize).toBeGreaterThanOrEqual(53);
+    expect(layout.tray.slotSize).toBeLessThanOrEqual(68);
+    expect(layout.tray.top - layout.board.bottom).toBeGreaterThanOrEqual(16);
     expect(layout.tray.bottom).toBeLessThanOrEqual(layout.height - layout.bottomMargin);
   });
 

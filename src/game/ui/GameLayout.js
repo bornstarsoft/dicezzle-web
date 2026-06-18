@@ -8,13 +8,14 @@ function compactRound(value) {
 
 export function calculateGameLayout({ width = 390, height = 430, boardSize = 5, traySize = 3 } = {}) {
   const compact = width < 560;
+  const tightMobile = compact && height <= 400;
   const topMargin = compact ? 6 : 14;
   const bottomMargin = compact ? 6 : 10;
   const sideMargin = clamp(width * (compact ? 0.035 : 0.045), compact ? 10 : 18, compact ? 16 : 28);
-  const trayGap = compact ? (height <= 410 ? 18 : 22) : 20;
+  const trayGap = compact ? (tightMobile ? 16 : height <= 410 ? 18 : 22) : 20;
   const traySlotGap = clamp(width * 0.024, compact ? 8 : 10, compact ? 11 : 16);
-  const maxTraySlot = compact ? 72 : 90;
-  const minTraySlot = compact ? 60 : 76;
+  const maxTraySlot = compact ? (tightMobile ? 68 : 72) : 90;
+  const minTraySlot = compact ? (tightMobile ? 58 : 60) : 76;
   const traySlotSize = Math.floor(clamp(
     (width - sideMargin * 2 - traySlotGap * (traySize - 1)) / traySize,
     minTraySlot,
@@ -22,7 +23,7 @@ export function calculateGameLayout({ width = 390, height = 430, boardSize = 5, 
   ));
   const availableBoardHeight = Math.max(220, height - topMargin - trayGap - traySlotSize - bottomMargin);
   const availableBoardWidth = width - sideMargin * 2;
-  const maxBoardSize = compact ? 330 : 420;
+  const maxBoardSize = compact ? (tightMobile ? 288 : 330) : 420;
   const rawBoardSize = Math.floor(Math.min(availableBoardWidth, availableBoardHeight, maxBoardSize));
   const cellGap = compactRound(clamp(rawBoardSize * 0.014, 4, compact ? 5.2 : 7));
   const cellSize = compactRound((rawBoardSize - cellGap * (boardSize - 1)) / boardSize);

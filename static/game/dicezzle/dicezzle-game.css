@@ -26,9 +26,9 @@
 .game-topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 8px;
-  min-height: 38px;
+  min-height: 32px;
 }
 
 .game-topbar__spacer {
@@ -173,7 +173,7 @@
 .dicezzle-game-canvas {
   width: 100%;
   max-width: 100%;
-  height: clamp(410px, 52svh, 540px);
+  height: clamp(392px, 50svh, 520px);
   min-height: 0;
   min-width: 0;
   overflow: hidden;
@@ -201,6 +201,7 @@
 
 .game-actions {
   justify-content: flex-end;
+  margin-left: auto;
 }
 
 .game-actions button,
@@ -217,6 +218,32 @@
   padding: 0 14px;
 }
 
+.game-topbar .game-actions button {
+  min-height: 34px;
+  border-color: #c6d5cd;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff 0%, #f5faf7 100%);
+  color: #304039;
+  font-size: 0.84rem;
+  font-weight: 850;
+  line-height: 1;
+  padding: 0 11px;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 84%),
+    0 2px 7px rgb(36 49 44 / 6%);
+}
+
+.game-topbar .game-actions button[aria-pressed="true"] {
+  border-color: #a8cbbb;
+  background: #eef7f1;
+  color: #244a3f;
+}
+
+.game-topbar .game-actions button:focus-visible {
+  outline: 2px solid #8fbba9;
+  outline-offset: 2px;
+}
+
 .game-actions button:first-child,
 .result-panel__actions button:first-child {
   background: #ffffff;
@@ -229,6 +256,13 @@
   background: #315f50;
   border-color: #315f50;
   color: #ffffff;
+}
+
+.game-topbar .game-actions button:first-child,
+.game-topbar .game-actions button:last-child {
+  border-color: #c6d5cd;
+  background: linear-gradient(180deg, #ffffff 0%, #f5faf7 100%);
+  color: #304039;
 }
 
 .tutorial-hint {
@@ -344,17 +378,17 @@
   }
 
   .game-topbar {
-    min-height: 34px;
+    min-height: 28px;
   }
 
   .game-actions {
-    gap: 7px;
+    gap: 6px;
   }
 
-  .game-actions button {
-    min-height: 36px;
-    padding: 0 10px;
-    font-size: 0.82rem;
+  .game-topbar .game-actions button {
+    min-height: 30px;
+    padding: 0 8px;
+    font-size: 0.75rem;
   }
 
   .game-hud {
@@ -374,7 +408,7 @@
   }
 
   .dicezzle-game-canvas {
-    height: clamp(404px, 48svh, 430px);
+    height: clamp(388px, 46svh, 412px);
   }
 
   .tutorial-hint {
