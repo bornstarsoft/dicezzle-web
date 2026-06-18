@@ -6,7 +6,7 @@ title = 'Dicezzle - Dice Merge Puzzle Online'
   siteName = 'Dicezzle'
   description = 'Play Dicezzle, a free dice merge puzzle game online. Place dice, merge matching numbers, create star dice, and keep the board open.'
   ogImage = '/images/og/dicezzle-og.svg'
-  gameAssetVersion = '20260618-result-popup-v1'
+  gameAssetVersion = '20260618-result-popup-compact-v1'
 
 [menu]
   [[menu.main]]

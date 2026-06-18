@@ -23,4 +23,16 @@ describe('site layout CSS', () => {
     expect(gameCss).not.toMatch(/\.game-topbar\s+\.game-actions\s+button\[aria-pressed="true"\]\s*{[^}]*background:\s*#(?:244a3f|315f50)/s);
     expect(gameShell).not.toContain('game-topbar__spacer');
   });
+
+  test('keeps mobile result popup, toast, and tutorial hint compact', () => {
+    const gameCss = readFileSync(new URL('../../../static/game/dicezzle/dicezzle-game.css', import.meta.url), 'utf8');
+
+    expect(gameCss).toMatch(/\.game-toast\s*{[^}]*white-space:\s*nowrap/s);
+    expect(gameCss).toMatch(/\.game-toast\s*{[^}]*max-width:\s*calc\(100vw - 24px\)/s);
+    expect(gameCss).toMatch(/\.tutorial-hint\s*{[^}]*white-space:\s*nowrap/s);
+    expect(gameCss).toMatch(/\.tutorial-hint\s*{[^}]*min-width:\s*0/s);
+    expect(gameCss).toMatch(/\.result-panel__share-note\s*{/s);
+    expect(gameCss).not.toMatch(/\.result-panel__share-text\s*{/s);
+    expect(gameCss).toMatch(/\.result-panel__inner\s*{[^}]*padding:\s*12px/s);
+  });
 });

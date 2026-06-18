@@ -1,6 +1,5 @@
 import { DiceModel } from '../core/DiceModel.js';
 import { ScoreModel } from '../core/ScoreModel.js';
-import { ShareService } from '../core/ShareService.js';
 
 export class ResultPanel {
   constructor(callbacks = {}) {
@@ -70,15 +69,7 @@ export class ResultPanel {
         <strong>${rank}</strong>
         <p>${this.getEncouragement(result)}</p>
       </div>
-      <pre class="result-panel__share-text">${ShareService.generateResultText({
-        ...result,
-        score,
-        bestScore,
-        starsCreated,
-        starClears,
-        bestChain,
-        rank
-      })}</pre>
+      <p class="result-panel__share-note">Share your result with friends.</p>
     `;
   }
 

@@ -27,6 +27,9 @@ describe('ResultPanel rendering', () => {
     expect(html).toContain('Turns');
     expect(html).toContain('Rank');
     expect(html).toContain('Star Maker');
+    expect(html).toContain('result-panel__share-note');
+    expect(html).not.toContain('result-panel__share-text');
+    expect(html).not.toContain('<pre');
   });
 
   test('handles missing optional result values without rendering undefined', () => {

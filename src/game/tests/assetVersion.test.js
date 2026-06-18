@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
 
-const ASSET_VERSION = '20260618-result-popup-v1';
+const ASSET_VERSION = '20260618-result-popup-compact-v1';
 
 describe('Dicezzle game asset versioning', () => {
   test('defines a manual game asset version in Hugo config', () => {
