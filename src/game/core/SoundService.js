@@ -78,10 +78,10 @@ export class SoundService {
   playStackLayer(layerIndex = 1, totalLayers = 3) {
     const clampedLayer = Math.max(1, Math.min(layerIndex, 6));
     const clampedTotal = Math.max(3, Math.min(totalLayers, 8));
-    const baseFrequency = 235 + clampedLayer * 32 + clampedTotal * 4;
+    const baseFrequency = 255 + clampedLayer * 34 + clampedTotal * 5;
     return this.playPattern([
-      { frequency: baseFrequency, start: 0, duration: 0.026, volume: 0.045 },
-      { frequency: baseFrequency * 1.52, start: 0.018, duration: 0.032, volume: 0.032 }
+      { frequency: baseFrequency, start: 0, duration: 0.062, volume: 0.078 },
+      { frequency: baseFrequency * 1.58, start: 0.024, duration: 0.058, volume: 0.052 }
     ], { type: 'triangle' });
   }
 
@@ -98,17 +98,17 @@ export class SoundService {
     const medium = groupSize >= 4;
     const base = 390 + Math.max(1, Math.min(valueRank, 6)) * 34;
     return this.playPattern([
-      { frequency: base, start: 0, duration: 0.045, volume: 0.064 },
-      { frequency: base * (medium ? 1.42 : 1.34), start: 0.042, duration: 0.068, volume: 0.066 },
-      ...(rich ? [{ frequency: base * 1.76, start: 0.095, duration: 0.072, volume: 0.048 }] : [])
+      { frequency: base, start: 0, duration: 0.07, volume: 0.082 },
+      { frequency: base * (medium ? 1.44 : 1.36), start: 0.05, duration: 0.102, volume: 0.086 },
+      ...(rich ? [{ frequency: base * 1.78, start: 0.118, duration: 0.112, volume: 0.064 }] : [])
     ], { type: 'triangle' });
   }
 
   playStarCreated() {
     return this.playPattern([
-      { frequency: 640, start: 0, duration: 0.05, volume: 0.08 },
-      { frequency: 880, start: 0.052, duration: 0.075, volume: 0.075 },
-      { frequency: 1175, start: 0.11, duration: 0.09, volume: 0.055 }
+      { frequency: 640, start: 0, duration: 0.065, volume: 0.092 },
+      { frequency: 880, start: 0.056, duration: 0.092, volume: 0.086 },
+      { frequency: 1175, start: 0.126, duration: 0.112, volume: 0.064 }
     ], { type: 'sine' });
   }
 

@@ -98,6 +98,19 @@ class FakeAudioContext {
   }
 }
 
+function audibleDuration(oscillator) {
+  return Number((oscillator.stopTime - oscillator.startTime - 0.02).toFixed(3));
+}
+
+function peakVolume(gain) {
+  return Math.max(
+    ...gain.gain.events
+      .filter((event) => event[0] === 'linear')
+      .map((event) => event[1]),
+    0
+  );
+}
+
 describe('SoundService', () => {
   test('stays silent and avoids creating audio context while disabled', () => {
     let createdContexts = 0;
@@ -173,5 +186,41 @@ describe('SoundService', () => {
 
     expect(sound.playMergeComplete({ valueBefore: 5, valueAfter: 6, groupSize: 5 })).toBe(true);
     expect(context.oscillators.length).toBeGreaterThan(afterStack);
+  });
+
+  test('stack layer ticks are long and present enough for mobile speakers', async () => {
+    const context = new FakeAudioContext();
+    const sound = new SoundService({
+      audioContextFactory: () => context,
+      enabled: true
+    });
+    await sound.unlock();
+
+    const before = context.oscillators.length;
+    expect(sound.playStackLayer(2, 4)).toBe(true);
+
+    const oscillators = context.oscillators.slice(before);
+    const gains = context.gains.slice(before);
+    expect(oscillators).toHaveLength(2);
+    expect(Math.max(...oscillators.map(audibleDuration))).toBeGreaterThanOrEqual(0.055);
+    expect(Math.max(...gains.map(peakVolume))).toBeGreaterThanOrEqual(0.065);
+  });
+
+  test('merge complete sound is a clearly stronger upgrade cue than stack ticks', async () => {
+    const context = new FakeAudioContext();
+    const sound = new SoundService({
+      audioContextFactory: () => context,
+      enabled: true
+    });
+    await sound.unlock();
+
+    const before = context.oscillators.length;
+    expect(sound.playMergeComplete({ valueBefore: 5, valueAfter: 6, groupSize: 5 })).toBe(true);
+
+    const oscillators = context.oscillators.slice(before);
+    const gains = context.gains.slice(before);
+    expect(oscillators.length).toBeGreaterThanOrEqual(3);
+    expect(Math.max(...oscillators.map(audibleDuration))).toBeGreaterThanOrEqual(0.09);
+    expect(Math.max(...gains.map(peakVolume))).toBeGreaterThanOrEqual(0.075);
   });
 });

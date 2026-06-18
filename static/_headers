@@ -1,0 +1,5 @@
+/game/dicezzle/dicezzle-game.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/game/dicezzle/dicezzle-game.css
+  Cache-Control: public, max-age=0, must-revalidate

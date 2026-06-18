@@ -6,7 +6,8 @@
 {{ $style := resources.Get "css/main.css" | minify | fingerprint }}
 <link rel="stylesheet" href="{{ $style.RelPermalink }}">
 {{ if or .IsHome .Params.game }}
-  <link rel="stylesheet" href="/game/dicezzle/dicezzle-game.css">
+  {{ $gameAssetVersion := site.Params.gameAssetVersion | default "dev" }}
+  <link rel="stylesheet" href="/game/dicezzle/dicezzle-game.css?v={{ $gameAssetVersion }}">
 {{ end }}
 {{ partial "share-meta.html" . }}
 
