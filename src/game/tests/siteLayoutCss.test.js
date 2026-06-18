@@ -11,4 +11,16 @@ describe('site layout CSS', () => {
     expect(mainCss).toMatch(/\.hero--game-first\s*{[^}]*width:\s*var\(--game-card-width\)/s);
     expect(mainCss).not.toContain('100% - 8px');
   });
+
+  test('keeps game utility controls right-aligned and visually secondary', () => {
+    const gameCss = readFileSync(new URL('../../../static/game/dicezzle/dicezzle-game.css', import.meta.url), 'utf8');
+    const gameShell = readFileSync(new URL('../../../layouts/partials/game-shell.html', import.meta.url), 'utf8');
+
+    expect(gameCss).toMatch(/\.game-topbar\s*{[^}]*justify-content:\s*flex-end/s);
+    expect(gameCss).toMatch(/\.game-actions\s*{[^}]*justify-content:\s*flex-end/s);
+    expect(gameCss).toMatch(/\.game-actions\s*{[^}]*margin-left:\s*auto/s);
+    expect(gameCss).toMatch(/\.game-topbar\s+\.game-actions\s+button\s*{[^}]*background:\s*linear-gradient\(180deg,\s*#ffffff\s*0%,\s*#f5faf7\s*100%\)/s);
+    expect(gameCss).not.toMatch(/\.game-topbar\s+\.game-actions\s+button\[aria-pressed="true"\]\s*{[^}]*background:\s*#(?:244a3f|315f50)/s);
+    expect(gameShell).not.toContain('game-topbar__spacer');
+  });
 });

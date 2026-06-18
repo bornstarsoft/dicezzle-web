@@ -28,11 +28,8 @@
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
+  width: 100%;
   min-height: 32px;
-}
-
-.game-topbar__spacer {
-  min-width: 1px;
 }
 
 .game-hud {
@@ -202,6 +199,7 @@
 .game-actions {
   justify-content: flex-end;
   margin-left: auto;
+  width: auto;
 }
 
 .game-actions button,
@@ -219,15 +217,15 @@
 }
 
 .game-topbar .game-actions button {
-  min-height: 34px;
+  min-height: 32px;
   border-color: #c6d5cd;
   border-radius: 8px;
   background: linear-gradient(180deg, #ffffff 0%, #f5faf7 100%);
   color: #304039;
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   font-weight: 850;
   line-height: 1;
-  padding: 0 11px;
+  padding: 0 10px;
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 84%),
     0 2px 7px rgb(36 49 44 / 6%);
@@ -235,7 +233,7 @@
 
 .game-topbar .game-actions button[aria-pressed="true"] {
   border-color: #a8cbbb;
-  background: #eef7f1;
+  background: linear-gradient(180deg, #f7fbf8 0%, #eef7f1 100%);
   color: #244a3f;
 }
 
@@ -388,7 +386,7 @@
   .game-topbar .game-actions button {
     min-height: 30px;
     padding: 0 8px;
-    font-size: 0.75rem;
+    font-size: 0.74rem;
   }
 
   .game-hud {

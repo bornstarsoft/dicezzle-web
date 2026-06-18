@@ -5,6 +5,7 @@ import { MergeResolver } from '../core/MergeResolver.js';
 import { RankModel } from '../core/RankModel.js';
 import { ScoreModel, defaultScoringConfig } from '../core/ScoreModel.js';
 import { ShareService } from '../core/ShareService.js';
+import { SoundService } from '../core/SoundService.js';
 import { StorageService } from '../core/StorageService.js';
 import { TrayGenerator } from '../core/TrayGenerator.js';
 import { TraySlots } from '../core/TraySlots.js';
@@ -31,6 +32,9 @@ export class GameScene extends Phaser.Scene {
 
   create() {
     this.storage = new StorageService();
+    this.sound = new SoundService({
+      enabled: this.storage.isSoundEnabled()
+    });
     this.scoringConfig = {
       ...defaultScoringConfig,
       ...(this.configData.scoring ?? {}),
@@ -96,10 +100,14 @@ export class GameScene extends Phaser.Scene {
     });
 
     const soundButton = document.querySelector('[data-game-sound]');
-    soundButton?.addEventListener('click', () => {
-      const next = !this.storage.isSoundEnabled();
+    soundButton?.addEventListener('click', async () => {
+      const next = !this.sound.isEnabled();
+      this.sound.setEnabled(next);
       this.storage.setSoundEnabled(next);
       this.updateSoundButton();
+      if (next) {
+        await this.sound.unlock({ confirm: true });
+      }
     });
     this.updateSoundButton();
 
@@ -133,9 +141,15 @@ export class GameScene extends Phaser.Scene {
     if (!button) {
       return;
     }
-    const enabled = this.storage.isSoundEnabled();
+    const enabled = this.sound?.isEnabled() ?? this.storage.isSoundEnabled();
     button.textContent = enabled ? 'Sound on' : 'Sound off';
     button.setAttribute('aria-pressed', String(enabled));
+  }
+
+  unlockSoundFromUserGesture({ confirm = false } = {}) {
+    if (this.sound?.isEnabled()) {
+      void this.sound.unlock({ confirm });
+    }
   }
 
   restartGame() {
@@ -146,6 +160,7 @@ export class GameScene extends Phaser.Scene {
     if (this.inputLocked || this.isGameOver || !this.tray[index]) {
       return;
     }
+    this.unlockSoundFromUserGesture();
     this.selectedTrayIndex = index;
     this.renderGame();
   }
@@ -154,11 +169,14 @@ export class GameScene extends Phaser.Scene {
     if (this.inputLocked || this.isGameOver) {
       return;
     }
+    this.unlockSoundFromUserGesture();
     if (this.selectedTrayIndex === null || !this.tray[this.selectedTrayIndex]) {
+      this.sound.playInvalidDrop();
       this.toast.show('Tap a die first.');
       return;
     }
     if (!this.board.isEmpty(row, col)) {
+      this.sound.playInvalidDrop();
       this.toast.show('Choose an empty cell.');
       return;
     }
@@ -176,6 +194,7 @@ export class GameScene extends Phaser.Scene {
 
     const die = this.tray[slotIndex];
     this.board.placeDie(row, col, die.value);
+    this.sound.playPlace();
     const visualBoard = this.board.clone();
     this.score += this.scoreModel.placeScore();
     this.highestDie = this.maxDie(this.highestDie, die.value);
@@ -282,6 +301,7 @@ export class GameScene extends Phaser.Scene {
     this.storage.incrementTotalGames();
     this.storage.saveLastResult(result);
     this.track('game_over', { score: result.score, rank: result.rank });
+    this.sound.playGameOver();
     this.renderGame();
     this.resultPanel.show(result);
   }
@@ -343,6 +363,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     const event = events[index];
+    this.playMergeSound(event);
     const hiddenCells = createHiddenCellSet();
     const renderVisualBoard = () => {
       if (visualBoard) {
@@ -441,6 +462,18 @@ export class GameScene extends Phaser.Scene {
       }
     }
     return blockers;
+  }
+
+  playMergeSound(event) {
+    if (event.type === 'starClear') {
+      this.sound.playStarClear();
+      return;
+    }
+    if (event.createdValue === 'star') {
+      this.sound.playStarCreated();
+      return;
+    }
+    this.sound.playMerge(event.group?.length ?? 3);
   }
 
   playGatherPlan({ plan, value, dieSize, cellSize, isSpecial = false, feedback = null, stackBase, onStackBaseStart, onStepStart, onComplete }) {
@@ -807,6 +840,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    this.unlockSoundFromUserGesture();
     this.cancelDrag({ render: false });
     const trayOrigin = this.trayView.getSlotCenter(slotIndex) ?? { x: pointer.x, y: pointer.y };
     const die = this.tray[slotIndex];
@@ -859,6 +893,7 @@ export class GameScene extends Phaser.Scene {
     this.previewCell = null;
 
     if (!boardCell || !this.board.isEmpty(boardCell.row, boardCell.col)) {
+      this.sound.playInvalidDrop();
       this.toast.show(boardCell ? 'Choose an empty cell.' : 'Drop onto the board.');
       this.previewCell = boardCell ? { ...boardCell, valid: false } : null;
       this.boardView.draw(this.board, {
