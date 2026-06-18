@@ -32,9 +32,7 @@ export class GameScene extends Phaser.Scene {
 
   create() {
     this.storage = new StorageService();
-    this.sound = new SoundService({
-      enabled: this.storage.isSoundEnabled()
-    });
+    this.sound = new SoundService();
     this.scoringConfig = {
       ...defaultScoringConfig,
       ...(this.configData.scoring ?? {}),
@@ -103,7 +101,6 @@ export class GameScene extends Phaser.Scene {
     soundButton?.addEventListener('click', async () => {
       const next = !this.sound.isEnabled();
       this.sound.setEnabled(next);
-      this.storage.setSoundEnabled(next);
       this.updateSoundButton();
       if (next) {
         await this.sound.unlock({ confirm: true });
@@ -141,7 +138,7 @@ export class GameScene extends Phaser.Scene {
     if (!button) {
       return;
     }
-    const enabled = this.sound?.isEnabled() ?? this.storage.isSoundEnabled();
+    const enabled = this.sound?.isEnabled() ?? false;
     button.textContent = enabled ? 'Sound on' : 'Sound off';
     button.setAttribute('aria-pressed', String(enabled));
   }
@@ -363,7 +360,6 @@ export class GameScene extends Phaser.Scene {
     }
 
     const event = events[index];
-    this.playMergeSound(event);
     const hiddenCells = createHiddenCellSet();
     const renderVisualBoard = () => {
       if (visualBoard) {
@@ -412,6 +408,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     const plan = this.buildGatherPlan(event, targetCenter, options.board);
+    plan.valueAfter = event.createdValue;
+    plan.starClear = false;
     this.playGatherPlan({
       plan,
       value: event.value,
@@ -464,18 +462,6 @@ export class GameScene extends Phaser.Scene {
     return blockers;
   }
 
-  playMergeSound(event) {
-    if (event.type === 'starClear') {
-      this.sound.playStarClear();
-      return;
-    }
-    if (event.createdValue === 'star') {
-      this.sound.playStarCreated();
-      return;
-    }
-    this.sound.playMerge(event.group?.length ?? 3);
-  }
-
   playGatherPlan({ plan, value, dieSize, cellSize, isSpecial = false, feedback = null, stackBase, onStackBaseStart, onStepStart, onComplete }) {
     if (!plan.steps.length || !stackBase) {
       onComplete?.();
@@ -499,6 +485,7 @@ export class GameScene extends Phaser.Scene {
     let landingActive = false;
     let nextLayerIndex = 1;
     const landingQueue = [];
+    const totalSteps = plan.steps.length + 1;
     const processLandingQueue = () => {
       if (landingActive || !landingQueue.length) {
         return;
@@ -512,13 +499,18 @@ export class GameScene extends Phaser.Scene {
       const layerIndex = nextLayerIndex;
       nextLayerIndex += 1;
       landingActive = true;
-      this.landStackOverlay(overlay, step, layerIndex, plan.steps.length + 1, cellSize, () => {
+      this.landStackOverlay(overlay, step, layerIndex, totalSteps, cellSize, () => {
         stackOverlays.push({ overlay, layerIndex });
+        this.sound.playStackLayer(layerIndex, totalSteps);
         completedSteps += 1;
         landingActive = false;
         if (completedSteps === plan.steps.length) {
           this.playMergeSizeFeedback(plan.target, feedback, cellSize);
-          this.playStackBounce(stackOverlays, value, cellSize, isSpecial, onComplete);
+          this.playStackBounce(stackOverlays, value, cellSize, isSpecial, {
+            valueAfter: plan.valueAfter,
+            starClear: plan.starClear,
+            onComplete
+          });
           return;
         }
         this.time.delayedCall(34, processLandingQueue);
@@ -622,16 +614,23 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  playStackBounce(stackOverlays, value, cellSize, isSpecial, onComplete) {
+  playStackBounce(stackOverlays, value, cellSize, isSpecial, options = {}) {
     const overlays = stackOverlays
       .sort((left, right) => left.layerIndex - right.layerIndex)
       .map((item) => item.overlay)
       .filter((overlay) => overlay && !overlay.destroyed);
 
     if (!overlays.length) {
-      onComplete?.();
+      options.onComplete?.();
       return;
     }
+
+    this.sound.playMergeComplete({
+      valueBefore: value,
+      valueAfter: options.valueAfter,
+      groupSize: overlays.length,
+      starClear: options.starClear
+    });
 
     const lastOverlay = overlays[overlays.length - 1];
     const style = DiceStyle.forValue(value);
@@ -666,7 +665,7 @@ export class GameScene extends Phaser.Scene {
           ease: 'Sine.easeOut',
           onComplete: () => {
             overlays.forEach((overlay) => overlay.destroy());
-            onComplete?.();
+            options.onComplete?.();
           }
         });
       }
@@ -790,6 +789,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     const plan = this.buildGatherPlan(event, targetCenter, options.board);
+    plan.valueAfter = null;
+    plan.starClear = true;
     this.playGatherPlan({
       plan,
       value: 'star',

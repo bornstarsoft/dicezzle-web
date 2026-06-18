@@ -144,4 +144,34 @@ describe('SoundService', () => {
     expect(sound.playGameOver()).toBe(false);
     expect(context.oscillators.length).toBeGreaterThan(0);
   });
+
+  test('stack layer and merge complete sounds are silent while disabled', () => {
+    let createdContexts = 0;
+    const sound = new SoundService({
+      audioContextFactory: () => {
+        createdContexts += 1;
+        return new FakeAudioContext();
+      }
+    });
+
+    expect(sound.playStackLayer(1, 3)).toBe(false);
+    expect(sound.playMergeComplete({ valueBefore: 2, valueAfter: 3, groupSize: 3 })).toBe(false);
+    expect(createdContexts).toBe(0);
+  });
+
+  test('stack layer and merge complete sounds schedule distinct tone patterns', async () => {
+    const context = new FakeAudioContext();
+    const sound = new SoundService({
+      audioContextFactory: () => context,
+      enabled: true
+    });
+    await sound.unlock();
+
+    expect(sound.playStackLayer(1, 4)).toBe(true);
+    const afterStack = context.oscillators.length;
+    expect(afterStack).toBeGreaterThan(0);
+
+    expect(sound.playMergeComplete({ valueBefore: 5, valueAfter: 6, groupSize: 5 })).toBe(true);
+    expect(context.oscillators.length).toBeGreaterThan(afterStack);
+  });
 });

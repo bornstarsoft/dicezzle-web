@@ -75,6 +75,35 @@ export class SoundService {
     ], { type: 'triangle' });
   }
 
+  playStackLayer(layerIndex = 1, totalLayers = 3) {
+    const clampedLayer = Math.max(1, Math.min(layerIndex, 6));
+    const clampedTotal = Math.max(3, Math.min(totalLayers, 8));
+    const baseFrequency = 235 + clampedLayer * 32 + clampedTotal * 4;
+    return this.playPattern([
+      { frequency: baseFrequency, start: 0, duration: 0.026, volume: 0.045 },
+      { frequency: baseFrequency * 1.52, start: 0.018, duration: 0.032, volume: 0.032 }
+    ], { type: 'triangle' });
+  }
+
+  playMergeComplete({ valueBefore = 1, valueAfter = null, groupSize = 3, starClear = false } = {}) {
+    if (starClear) {
+      return this.playStarClear();
+    }
+    if (valueAfter === 'star') {
+      return this.playStarCreated();
+    }
+
+    const valueRank = Number.isFinite(Number(valueBefore)) ? Number(valueBefore) : 3;
+    const rich = groupSize >= 5;
+    const medium = groupSize >= 4;
+    const base = 390 + Math.max(1, Math.min(valueRank, 6)) * 34;
+    return this.playPattern([
+      { frequency: base, start: 0, duration: 0.045, volume: 0.064 },
+      { frequency: base * (medium ? 1.42 : 1.34), start: 0.042, duration: 0.068, volume: 0.066 },
+      ...(rich ? [{ frequency: base * 1.76, start: 0.095, duration: 0.072, volume: 0.048 }] : [])
+    ], { type: 'triangle' });
+  }
+
   playStarCreated() {
     return this.playPattern([
       { frequency: 640, start: 0, duration: 0.05, volume: 0.08 },
