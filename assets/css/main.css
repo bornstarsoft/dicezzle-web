@@ -12,6 +12,8 @@
   --coral: #df6758;
   --blue: #6f9fbd;
   --shadow: 0 16px 40px rgb(36 49 44 / 10%);
+  --content-card-width: min(1120px, calc(100% - 28px));
+  --game-card-width: min(760px, calc(100% - 28px));
 }
 
 * {
@@ -91,7 +93,7 @@ a {
   grid-template-columns: minmax(0, 1fr) minmax(280px, 430px);
   gap: clamp(24px, 6vw, 62px);
   align-items: center;
-  width: min(1120px, calc(100% - 28px));
+  width: var(--content-card-width);
   min-height: min(680px, calc(100vh - 88px));
   margin: 0 auto;
   padding: clamp(24px, 6vw, 64px) 0;
@@ -101,7 +103,7 @@ a {
   grid-template-columns: 1fr;
   min-height: auto;
   gap: 8px;
-  width: min(760px, calc(100% - 20px));
+  width: var(--game-card-width);
   padding-top: 4px;
   padding-bottom: 8px;
 }
@@ -225,7 +227,7 @@ a {
 .section-grid,
 .page,
 .related-games {
-  width: min(1120px, calc(100% - 28px));
+  width: var(--content-card-width);
   margin: 0 auto;
 }
 
@@ -429,7 +431,7 @@ a {
   }
 
   .hero--game-first {
-    width: min(100% - 8px, 760px);
+    width: var(--game-card-width);
     gap: 0;
     padding-top: 0;
   }
@@ -453,10 +455,6 @@ a {
 
   .hero__game .dicezzle-game-canvas {
     height: clamp(388px, 46svh, 412px);
-  }
-
-  .page {
-    width: min(100% - 8px, 1120px);
   }
 
   .page--game {
