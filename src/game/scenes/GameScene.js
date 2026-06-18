@@ -278,9 +278,8 @@ export class GameScene extends Phaser.Scene {
 
   endGame() {
     this.isGameOver = true;
-    const result = {
+    const baseResult = {
       score: this.score,
-      bestScore: this.storage.saveBestScore(this.score),
       highestDie: this.highestDie,
       starsCreated: this.starsCreated,
       starClears: this.starClears,
@@ -293,6 +292,15 @@ export class GameScene extends Phaser.Scene {
         starClears: this.starClears,
         bestChain: this.bestChain
       })
+    };
+    const records = this.storage.saveResultRecords(baseResult);
+    const result = {
+      ...baseResult,
+      bestScore: records.bestScore,
+      bestStars: records.bestStars,
+      bestStarClears: records.bestStarClears,
+      bestChainRecord: records.bestChain,
+      newBestScore: records.newBestScore
     };
 
     this.storage.incrementTotalGames();

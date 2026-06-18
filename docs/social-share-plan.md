@@ -7,12 +7,14 @@ Dicezzle sharing should feel like a natural score brag, not a pressure mechanic.
 ```text
 Dicezzle Classic
 Score: 12,840
-Best Die: ⭐
-Star Clears: 3
+Best: 18,420
+Stars: 3
+Star Clears: 1
 Best Chain: x3
 Rank: Star Maker
+
 Can you beat my score?
-https://dicezzle.com/play/
+https://dicezzle.com/
 ```
 
 ## MVP behavior

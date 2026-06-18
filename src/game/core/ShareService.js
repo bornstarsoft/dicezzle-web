@@ -1,8 +1,7 @@
-import { DiceModel } from './DiceModel.js';
 import { ScoreModel } from './ScoreModel.js';
 
 export class ShareService {
-  static shareUrl = 'https://dicezzle.com/play/';
+  static shareUrl = 'https://dicezzle.com/';
 
   static title = 'Dicezzle - Dice Merge Puzzle Online';
 
@@ -10,10 +9,12 @@ export class ShareService {
     return [
       'Dicezzle Classic',
       `Score: ${ScoreModel.formatScore(result.score ?? 0)}`,
-      `Best Die: ${DiceModel.label(result.highestDie ?? 1)}`,
+      `Best: ${ScoreModel.formatScore(result.bestScore ?? result.score ?? 0)}`,
+      `Stars: ${result.starsCreated ?? 0}`,
       `Star Clears: ${result.starClears ?? 0}`,
       `Best Chain: x${result.bestChain ?? 1}`,
-      `Rank: ${result.rank}`,
+      `Rank: ${result.rank ?? 'Beginner Roller'}`,
+      '',
       'Can you beat my score?',
       ShareService.shareUrl
     ].join('\n');

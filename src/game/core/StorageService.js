@@ -1,5 +1,8 @@
 const STORAGE_KEYS = {
   bestScore: 'dicezzle.bestScore',
+  bestStars: 'dicezzle.bestStars',
+  bestStarClears: 'dicezzle.bestStarClears',
+  bestChain: 'dicezzle.bestChain',
   soundEnabled: 'dicezzle.soundEnabled',
   tutorialDismissed: 'dicezzle.tutorialDismissed',
   totalGames: 'dicezzle.totalGames',
@@ -37,6 +40,29 @@ export class StorageService {
     const best = Math.max(this.getBestScore(), score);
     this.storage?.setItem(STORAGE_KEYS.bestScore, String(best));
     return best;
+  }
+
+  saveBestNumber(key, value) {
+    const best = Math.max(this.getNumber(key, 0), Number(value) || 0);
+    this.storage?.setItem(key, String(best));
+    return best;
+  }
+
+  saveResultRecords(result = {}) {
+    const previousBestScore = this.getBestScore();
+    const score = Number(result.score) || 0;
+    const bestScore = this.saveBestScore(score);
+    const bestStars = this.saveBestNumber(STORAGE_KEYS.bestStars, result.starsCreated);
+    const bestStarClears = this.saveBestNumber(STORAGE_KEYS.bestStarClears, result.starClears);
+    const bestChain = this.saveBestNumber(STORAGE_KEYS.bestChain, result.bestChain);
+
+    return {
+      bestScore,
+      bestStars,
+      bestStarClears,
+      bestChain,
+      newBestScore: score > previousBestScore
+    };
   }
 
   isSoundEnabled() {
